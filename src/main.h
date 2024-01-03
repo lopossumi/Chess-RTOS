@@ -6,7 +6,6 @@ enum class TimerMode
     SuddenDeath,
     Fischer,
     Hourglass,
-    ByoYomi,
     TimerMode_MAX
 };
 

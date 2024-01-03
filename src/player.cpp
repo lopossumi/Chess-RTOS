@@ -1,14 +1,20 @@
 class Player
 {
 private:
-    int ticksLeft;
+    long ticksLeft;
+    int incrementAmount;
 
 public:
     Player() { ticksLeft = 0; };
 
     void setMinutes(int minutes)
     {
-        ticksLeft = minutes * 600;
+        ticksLeft = minutes * 600l;
+    }
+
+    void setIncrement(int seconds)
+    {
+        incrementAmount = seconds * 10;
     }
 
     int getMinutes() 
@@ -34,9 +40,14 @@ public:
         }
     }
 
-    void increment(int seconds)
+    void increment()
     {
-        ticksLeft += seconds * 10;
+        ticksLeft += incrementAmount;
+    }
+
+    void incrementOneTick()
+    {
+        ticksLeft++;
     }
 
     bool isOutOfTime()
