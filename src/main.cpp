@@ -14,16 +14,16 @@ void TaskReadButton(void *pvParameters);
 void TaskGameLoop(void *pvParameters);
 
 ClockState currentState;
-
 TimerMode timerMode;
-int playtimeMinutes;
-int incrementSeconds;
-bool blink;
 
 Player black(PlayerColor::Black);
 Player white(PlayerColor::White);
 Player *currentPlayer;
 Player *otherPlayer;
+
+int playtimeMinutes;
+int incrementSeconds;
+bool blink;
 
 void setup()
 {
@@ -34,34 +34,13 @@ void setup()
     lcd.begin(16, 2);
     currentState = ClockState::Welcome;
 
-    xTaskCreate(
-        TaskUpdateScreen, 
-        "DigitalRead",
-        128,
-        NULL,
-        2,
-        NULL);
-
-    xTaskCreate(
-        TaskReadButton,
-        "AnalogRead",
-        128,
-        NULL,
-        1,
-        NULL);
-    
-    xTaskCreate(
-        TaskGameLoop,
-        "GameLoop",
-        128,
-        NULL,
-        3,
-        NULL);
+    // FreeRTOS  Function Name      Task Name       Stack   Params  Prio  Handle
+    xTaskCreate( TaskUpdateScreen,  "UpdateScreen", 128,    NULL,   2,    NULL );
+    xTaskCreate( TaskReadButton,    "ReadButton",   128,    NULL,   1,    NULL );
+    xTaskCreate( TaskGameLoop,      "GameLoop",     128,    NULL,   3,    NULL );
 }
 
-void loop()
-{
-}
+void loop() {}
 
 /** 
  * Print setpoints for minutes and seconds on the second row of the LCD.
@@ -166,16 +145,17 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
             printTimes();
             break;
 
-        case ClockState::GameOverWhiteWins:
+        case ClockState::GameOver:
             lcd.print("   Game Over    ");
             lcd.setCursor(0, 1);
-            lcd.print("   White wins! \x7e");
-            break;
-
-        case ClockState::GameOverBlackWins:
-            lcd.print("   Game Over    ");
-            lcd.setCursor(0, 1);
-            lcd.print("\x7f  Black wins!  ");
+            if(currentPlayer->isBlack())
+            {
+                lcd.print("   White wins! \x7e");
+            }
+            else
+            {
+                lcd.print("\x7f  Black wins!  ");
+            }
             break;
 
         default:
@@ -186,15 +166,15 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
     }
 }
 
-ButtonState convertButtonState(int buttonValue)
+ButtonState convertButtonState(int value)
 {
-    if (buttonValue >= 1000)            return ButtonState::None;
-    else if (buttonValue < 50)          return ButtonState::Right;
-    else if (buttonValue < 150)         return ButtonState::Up;
-    else if (buttonValue < 300)         return ButtonState::Down;
-    else if (buttonValue < 500)         return ButtonState::Left;
-    else if (buttonValue < 700)         return ButtonState::Select;
-    else                                return ButtonState::None;   
+    if (value >= 1000)      return ButtonState::None;
+    else if (value < 50)    return ButtonState::Right;
+    else if (value < 150)   return ButtonState::None;
+    else if (value < 300)   return ButtonState::None;
+    else if (value < 500)   return ButtonState::Left;
+    else if (value < 700)   return ButtonState::Select;
+    else                    return ButtonState::None;   
 }
 
 void TaskGameLoop(void *pvParameters __attribute__((unused)))
@@ -248,18 +228,13 @@ void TaskGameLoop(void *pvParameters __attribute__((unused)))
                 }
                 if(currentPlayer->isOutOfTime())
                 {
-                    currentState = currentPlayer->isBlack()
-                        ? ClockState::GameOverWhiteWins
-                        : ClockState::GameOverBlackWins;
+                    currentState = ClockState::GameOver;
+                    blink = false;
                 }
                 break;
             
             case ClockState::Pause:
                 blink = true;
-                break;
-            case ClockState::GameOverBlackWins:
-            case ClockState::GameOverWhiteWins:
-                blink = false;
                 break;
             default:
                 break;
@@ -465,12 +440,11 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
                 }
                 break;
 
-            // Both Game over screens:
+            // Game over screen:
             // * Select button returns to set minutes screen
             // * Left button does nothing
             // * Right button does nothing
-            case ClockState::GameOverBlackWins:
-            case ClockState::GameOverWhiteWins:
+            case ClockState::GameOver:
                 switch (button)
                 {
                     case ButtonState::Select:

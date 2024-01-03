@@ -13,12 +13,9 @@ enum class TimerMode
 enum class ButtonState
 {
     None,
-    Hold,
     Select,
     Left,
     Right,
-    Up,
-    Down,
     ButtonState_MAX
 };
 
@@ -31,8 +28,7 @@ enum class ClockState
     Ready,
     Play,
     Pause,
-    GameOverWhiteWins,
-    GameOverBlackWins,
+    GameOver,
     ClockState_MAX
 };
 
