@@ -1,5 +1,6 @@
 #include <Arduino_FreeRTOS.h>
 #include <Arduino.h>
+#include <EEPROM.h>
 #include <LiquidCrystal.h>
 #include <Wire.h>
 
@@ -15,19 +16,21 @@ void TaskGameLoop(void *pvParameters);
 ClockState currentState;
 
 TimerMode timerMode;
-int buttonValue;
-int playtimeMinutes = 15;
-int incrementSeconds = 30;
-bool blink = false;
+int playtimeMinutes;
+int incrementSeconds;
+bool blink;
 
 Player black;
 Player white;
 
 void setup()
 {
+    timerMode = (TimerMode)EEPROM.read(0);
+    playtimeMinutes = EEPROM.read(1);
+    incrementSeconds = EEPROM.read(2);
+
     lcd.begin(16, 2);
     currentState = ClockState::Welcome;
-    timerMode = TimerMode::SuddenDeath;
 
     xTaskCreate(
         TaskUpdateScreen, 
@@ -125,12 +128,10 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
             lcd.setCursor(0, 1);
             switch (timerMode)
             {
-                case TimerMode::SuddenDeath:    lcd.print("\x7f Sudden Death \x7e");  break;
-                case TimerMode::Hourglass:      lcd.print("\x7f Hourglass    \x7e");  break;
-                case TimerMode::Fischer:        lcd.print("\x7f Fischer      \x7e");  break;
-
-                default:
-                    break;
+                case TimerMode::SuddenDeath:    lcd.print("\x7f Sudden Death \x7e"); break;
+                case TimerMode::Hourglass:      lcd.print("\x7f Hourglass    \x7e"); break;
+                case TimerMode::Fischer:        lcd.print("\x7f Fischer      \x7e"); break;
+                default:                        lcd.print("\x7f Unknown      \x7e"); break;
             }
             break;
 
@@ -183,7 +184,6 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
         default:
             break;
         }
-        lcd.print(buttonValue);
 
         vTaskDelay(pdMS_TO_TICKS(100));
     }
@@ -220,7 +220,6 @@ void TaskGameLoop(void *pvParameters __attribute__((unused)))
                         break;
 
                     case TimerMode::Fischer:
-                        incrementSeconds = 30;
                         break;
 
                     default:
@@ -229,6 +228,7 @@ void TaskGameLoop(void *pvParameters __attribute__((unused)))
                 break;
             
             case ClockState::Ready:
+                // Store playtime and increment to eeprom
                 black.setMinutes(playtimeMinutes);
                 white.setMinutes(playtimeMinutes);
                 black.setIncrement(incrementSeconds);
@@ -313,13 +313,13 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
                         break;
 
                     case ButtonState::Left:
-                        timerMode = (timerMode == (TimerMode)0) 
+                        timerMode = (timerMode <= (TimerMode)0) 
                             ? (TimerMode)((int)TimerMode::TimerMode_MAX - 1) 
                             : (TimerMode)((int)timerMode - 1);
                         break;
 
                     case ButtonState::Right:
-                        timerMode = (timerMode == (TimerMode)((int)TimerMode::TimerMode_MAX - 1)) 
+                        timerMode = (timerMode >= (TimerMode)((int)TimerMode::TimerMode_MAX - 1)) 
                             ? (TimerMode)0 
                             : (TimerMode)((int)timerMode + 1);
                         break;
@@ -401,6 +401,11 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
             case ClockState::Ready:
                 switch (button)
                 {
+                    case ButtonState::Select:
+                        EEPROM.write(0, (int)timerMode);
+                        EEPROM.write(1, playtimeMinutes);
+                        EEPROM.write(2, incrementSeconds);
+                        break;
                     case ButtonState::Left:
                         currentState = ClockState::White;
                         break;

@@ -3,10 +3,10 @@
 
 enum class TimerMode
 {
-    SuddenDeath,
-    Fischer,
-    Hourglass,
-    TimerMode_MAX
+    SuddenDeath = 0,
+    Fischer = 1,
+    Hourglass = 2,
+    TimerMode_MAX = 3
 };
 
 enum class ButtonState
