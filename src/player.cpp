@@ -1,37 +1,40 @@
+enum class PlayerColor
+{
+    White,
+    Black,
+    PlayerColor_MAX
+};
+
 class Player
 {
 private:
+    PlayerColor color;
     long ticksLeft;
     int incrementAmount;
+    int delay;
 
 public:
-    Player() { ticksLeft = 0; };
+    Player(PlayerColor color) 
+    {
+        this->color = color;
+        ticksLeft = 0;
+    };
 
-    void setMinutes(int minutes)
+    void initialize(int minutes, int increment)
     {
         ticksLeft = minutes * 600l;
+        incrementAmount = increment * 10;
+        delay = incrementAmount;
     }
 
-    void setIncrement(int seconds)
-    {
-        incrementAmount = seconds * 10;
-    }
-
-    int getMinutes() 
-    { 
-        return ticksLeft / 600; 
-    }
-
-    int getSeconds()
-    {
-        return (ticksLeft / 10) % 60;
-    }
-
-    int getTenths()
-    {
-        return ticksLeft % 10;
-    }
-
+    PlayerColor getColor()  { return color;                         }
+    int getMinutes()        { return ticksLeft / 600;               }
+    int getSeconds()        { return (ticksLeft / 10) % 60;         }
+    int getTenths()         { return ticksLeft % 10;                }
+    bool isOutOfTime()      { return ticksLeft == 0;                }
+    bool isInDanger()       { return ticksLeft <= 100;              }
+    bool isBlack()          { return color == PlayerColor::Black;   }
+    bool isWhite()          { return color == PlayerColor::White;   }
     void decrement()
     {
         if (ticksLeft > 0)
@@ -50,13 +53,20 @@ public:
         ticksLeft++;
     }
 
-    bool isOutOfTime()
+    void delayOrDecrement()
     {
-        return ticksLeft == 0;
+        if (delay > 0)
+        {
+            delay--;
+        }
+        else
+        {
+            decrement();
+        }
     }
 
-    bool isInDanger()
+    void resetDelay()
     {
-        return ticksLeft <= 100;
+        delay = incrementAmount;
     }
 };

@@ -6,7 +6,8 @@ enum class TimerMode
     SuddenDeath = 0,
     Fischer = 1,
     Hourglass = 2,
-    TimerMode_MAX = 3
+    SimpleDelay = 3,
+    TimerMode_MAX = 4
 };
 
 enum class ButtonState
@@ -28,10 +29,8 @@ enum class ClockState
     MinuteSet,
     SecondSet,
     Ready,
-    White,
-    Black,
-    PausedWithWhite,
-    PausedWithBlack,
+    Play,
+    Pause,
     GameOverWhiteWins,
     GameOverBlackWins,
     ClockState_MAX

@@ -20,8 +20,10 @@ int playtimeMinutes;
 int incrementSeconds;
 bool blink;
 
-Player black;
-Player white;
+Player black(PlayerColor::Black);
+Player white(PlayerColor::White);
+Player *currentPlayer;
+Player *otherPlayer;
 
 void setup()
 {
@@ -131,6 +133,7 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
                 case TimerMode::SuddenDeath:    lcd.print("\x7f Sudden Death \x7e"); break;
                 case TimerMode::Hourglass:      lcd.print("\x7f Hourglass    \x7e"); break;
                 case TimerMode::Fischer:        lcd.print("\x7f Fischer      \x7e"); break;
+                case TimerMode::SimpleDelay:    lcd.print("\x7f Simple Delay \x7e"); break;
                 default:                        lcd.print("\x7f Unknown      \x7e"); break;
             }
             break;
@@ -150,35 +153,29 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
             printTimes();
             break;
 
-        case ClockState::White:
-            lcd.print("         White \x7e");
-            printTimes();
-            break;
-
-        case ClockState::Black:
-            lcd.print("\x7f Black         ");
-            printTimes();
-            break;
-        case ClockState::PausedWithBlack:
-            lcd.print("\x7f Black         ");
-            printTimes();
-            break;
-
-        case ClockState::PausedWithWhite:
-            lcd.print("         White \x7e");
+        case ClockState::Play:
+        case ClockState::Pause:
+            if(currentPlayer->isBlack())
+            {
+                lcd.print("\x7f Black         ");
+            }
+            else
+            {
+                lcd.print("         White \x7e");
+            }
             printTimes();
             break;
 
         case ClockState::GameOverWhiteWins:
             lcd.print("   Game Over    ");
             lcd.setCursor(0, 1);
-            lcd.print("   White wins!  ");
+            lcd.print("   White wins! \x7e");
             break;
 
         case ClockState::GameOverBlackWins:
             lcd.print("   Game Over    ");
             lcd.setCursor(0, 1);
-            lcd.print("   Black wins!  ");
+            lcd.print("\x7f  Black wins!  ");
             break;
 
         default:
@@ -228,43 +225,36 @@ void TaskGameLoop(void *pvParameters __attribute__((unused)))
                 break;
             
             case ClockState::Ready:
-                // Store playtime and increment to eeprom
-                black.setMinutes(playtimeMinutes);
-                white.setMinutes(playtimeMinutes);
-                black.setIncrement(incrementSeconds);
-                white.setIncrement(incrementSeconds);
+                black.initialize(playtimeMinutes, incrementSeconds);
+                white.initialize(playtimeMinutes, incrementSeconds);
                 break;
 
-            case ClockState::White:
-                blink = white.isInDanger();
-                white.decrement();
-                if(timerMode == TimerMode::Hourglass)
+            case ClockState::Play:
+                blink = currentPlayer->isInDanger();
+                switch(timerMode)
                 {
-                    black.incrementOneTick();
-                }
+                    case TimerMode::SimpleDelay:
+                        currentPlayer->delayOrDecrement();
+                        break;
 
-                if(white.isOutOfTime())
-                {
-                    currentState = ClockState::GameOverBlackWins;
-                }
-                break;
+                    case TimerMode::Hourglass:
+                        otherPlayer->incrementOneTick();
+                        currentPlayer->decrement();
+                        break;
 
-            case ClockState::Black:
-                blink = black.isInDanger();
-                black.decrement();
-                if(timerMode == TimerMode::Hourglass)
-                {
-                    white.incrementOneTick();
+                    default:
+                        currentPlayer->decrement();
+                        break;
                 }
-
-                if(black.isOutOfTime())
+                if(currentPlayer->isOutOfTime())
                 {
-                    currentState = ClockState::GameOverWhiteWins;
+                    currentState = currentPlayer->isBlack()
+                        ? ClockState::GameOverWhiteWins
+                        : ClockState::GameOverBlackWins;
                 }
                 break;
             
-            case ClockState::PausedWithBlack:
-            case ClockState::PausedWithWhite:
+            case ClockState::Pause:
                 blink = true;
                 break;
             case ClockState::GameOverBlackWins:
@@ -407,11 +397,15 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
                         EEPROM.write(2, incrementSeconds);
                         break;
                     case ButtonState::Left:
-                        currentState = ClockState::White;
+                        currentPlayer = &white;
+                        otherPlayer = &black;
+                        currentState = ClockState::Play;                        
                         break;
 
                     case ButtonState::Right:
-                        currentState = ClockState::Black;
+                        currentPlayer = &black;
+                        otherPlayer = &white;
+                        currentState = ClockState::Play;
                         break;
                 
                     default:
@@ -419,82 +413,51 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
                 }
                 break;
 
-            // White to play screen:
+            // Play screen:
             // * Select button pauses the game
-            // * Left button does nothing
-            // * Right button sets the game to black to play
-            case ClockState::White:
+            // * Left button is black player button
+            // * Right button is white player button
+            case ClockState::Play:
                 switch (button)
                 {
                     case ButtonState::Select:
                         blink = true;
-                        currentState = ClockState::PausedWithWhite;
+                        currentState = ClockState::Pause;
                         break;
-
-                    case ButtonState::Right:
-                        if(timerMode == TimerMode::Fischer)
-                        {
-                            white.increment();
-                        }
-                        currentState = ClockState::Black;
-                        break;
-                
-                    default:
-                        break;
-                }
-                break;
-            
-            // Black to play screen:
-            // * Select button pauses the game
-            // * Left button sets the game to white to play
-            // * Right button does nothing
-            case ClockState::Black:
-                switch (button)
-                {
-                    case ButtonState::Select:
-                        blink = true;
-                        currentState = ClockState::PausedWithBlack;
-                        break;
-
+                    
                     case ButtonState::Left:
-                        if(timerMode == TimerMode::Fischer)
+                    case ButtonState::Right:
+                        if (button == ButtonState::Left && currentPlayer->isWhite()) break;
+                        if (button == ButtonState::Right && currentPlayer->isBlack()) break;
+
+                        switch (timerMode)
                         {
-                            black.increment();
+                            case TimerMode::SimpleDelay:
+                                currentPlayer->resetDelay();
+                                break;
+                            case TimerMode::Fischer:
+                                currentPlayer->increment();
+                                break;
+                            default:
+                                break;
                         }
-                        currentState = ClockState::White;
-                        break;
-                
-                    default:
+                        Player *temp = currentPlayer;
+                        currentPlayer = otherPlayer;
+                        otherPlayer = temp;
                         break;
                 }
                 break;
 
-            // Paused with white to play screen:
+            // Pause screen:
             // * Select button resumes the game
             // * Left button does nothing
             // * Right button does nothing
-            case ClockState::PausedWithWhite:
+            case ClockState::Pause:
                 switch (button)
                 {
                     case ButtonState::Select:
                         blink = false;
-                        currentState = ClockState::White;
-                        break;
-                
-                    default:
-                        break;
-                }
-                break;
-
-            // Paused with black to play screen:
-            // * Select button resumes the game
-            // * Left button does nothing
-            // * Right button does nothing
-            case ClockState::PausedWithBlack:
-                switch (button)
-                {
-                    case ButtonState::Select:
-                        currentState = ClockState::Black;
+                        currentState = ClockState::Play;
                         break;
                 
                     default:
