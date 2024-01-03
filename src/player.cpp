@@ -54,4 +54,9 @@ public:
     {
         return ticksLeft == 0;
     }
+
+    bool isInDanger()
+    {
+        return ticksLeft <= 100;
+    }
 };

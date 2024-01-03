@@ -76,14 +76,6 @@ void printSetpoints()
     lcd.print(buffer);
 }
 
-void printMinutesOnly()
-{
-    lcd.setCursor(0, 1);
-    char buffer[17];
-    sprintf(buffer, "       %02dm      ", playtimeMinutes);
-    lcd.print(buffer);
-}
-
 /** 
  * Print times for black and white players on the second row of the LCD.
  * Time is in the format mm:ss.t
@@ -110,16 +102,22 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
         if(blink)
         {
             lcd.clear();
-            vTaskDelay(10);
+            vTaskDelay(pdMS_TO_TICKS(100));
         }
 
         lcd.setCursor(0, 0);
         switch (currentState)
         {
         case ClockState::Welcome:
-            lcd.print("  Chess Clock   ");
+            lcd.print("Chess Clock v1.0");
             lcd.setCursor(0, 1);
             lcd.print(" (c) milo 2024  ");
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            lcd.setCursor(0, 0);
+            lcd.print("\xc1\xaa\xbd \xa5 \xb8\xdb\xaf\xb8  v1.0");
+            lcd.setCursor(0, 1);
+            lcd.print(" (c)  \xd0\xdb  2024    ");
+            vTaskDelay(pdMS_TO_TICKS(1000));
             break;
 
         case ClockState::ModeSet:
@@ -127,9 +125,9 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
             lcd.setCursor(0, 1);
             switch (timerMode)
             {
-                case TimerMode::SuddenDeath:    lcd.print("< Sudden Death >");  break;
-                case TimerMode::Hourglass:      lcd.print("< Hourglass    >");  break;
-                case TimerMode::Fischer:        lcd.print("< Fischer      >");  break;
+                case TimerMode::SuddenDeath:    lcd.print("\x7f Sudden Death \x7e");  break;
+                case TimerMode::Hourglass:      lcd.print("\x7f Hourglass    \x7e");  break;
+                case TimerMode::Fischer:        lcd.print("\x7f Fischer      \x7e");  break;
 
                 default:
                     break;
@@ -152,21 +150,21 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
             break;
 
         case ClockState::White:
-            lcd.print("         White >");
+            lcd.print("         White \x7e");
             printTimes();
             break;
 
         case ClockState::Black:
-            lcd.print("< Black         ");
+            lcd.print("\x7f Black         ");
             printTimes();
             break;
         case ClockState::PausedWithBlack:
-            lcd.print("< Black         ");
+            lcd.print("\x7f Black         ");
             printTimes();
             break;
 
         case ClockState::PausedWithWhite:
-            lcd.print("         White >");
+            lcd.print("         White \x7e");
             printTimes();
             break;
 
@@ -187,7 +185,7 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
         }
         lcd.print(buttonValue);
 
-        vTaskDelay(blink ? 50 : 1);
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
@@ -209,7 +207,7 @@ void TaskGameLoop(void *pvParameters __attribute__((unused)))
         switch (currentState)
         {
             case ClockState::Welcome:
-                vTaskDelay(pdMS_TO_TICKS(2000));
+                vTaskDelay(pdMS_TO_TICKS(3000));
                 currentState = ClockState::ModeSet;
                 break;
             
@@ -238,6 +236,7 @@ void TaskGameLoop(void *pvParameters __attribute__((unused)))
                 break;
 
             case ClockState::White:
+                blink = white.isInDanger();
                 white.decrement();
                 if(timerMode == TimerMode::Hourglass)
                 {
@@ -251,6 +250,7 @@ void TaskGameLoop(void *pvParameters __attribute__((unused)))
                 break;
 
             case ClockState::Black:
+                blink = black.isInDanger();
                 black.decrement();
                 if(timerMode == TimerMode::Hourglass)
                 {
@@ -263,6 +263,14 @@ void TaskGameLoop(void *pvParameters __attribute__((unused)))
                 }
                 break;
             
+            case ClockState::PausedWithBlack:
+            case ClockState::PausedWithWhite:
+                blink = true;
+                break;
+            case ClockState::GameOverBlackWins:
+            case ClockState::GameOverWhiteWins:
+                blink = false;
+                break;
             default:
                 break;
         }
@@ -394,12 +402,10 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
                 switch (button)
                 {
                     case ButtonState::Left:
-                        blink = false;
                         currentState = ClockState::White;
                         break;
 
                     case ButtonState::Right:
-                        blink = false;
                         currentState = ClockState::Black;
                         break;
                 
@@ -483,7 +489,6 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
                 switch (button)
                 {
                     case ButtonState::Select:
-                        blink = false;
                         currentState = ClockState::Black;
                         break;
                 
