@@ -4,10 +4,12 @@
 #include <LiquidCrystal.h>
 #include <Wire.h>
 
-#include "main.h"
-#include "player.cpp"
+#include "enums.hpp"
+#include "player.hpp"
+#include "main.hpp"
 
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 void TaskUpdateScreen(void *pvParameters);
 void TaskReadButton(void *pvParameters);
@@ -16,8 +18,8 @@ void TaskGameLoop(void *pvParameters);
 ClockState currentState;
 TimerMode timerMode;
 
-Player black(PlayerColor::Black);
-Player white(PlayerColor::White);
+Player black = Player(PlayerColor::Black);
+Player white = Player(PlayerColor::White);
 Player *currentPlayer;
 Player *otherPlayer;
 
@@ -227,13 +229,14 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
 
 Button convertButtonState(int value)
 {
-    if (value >= 1000)      return Button::None;
-    else if (value < 50)    return Button::Right;
-    else if (value < 150)   return Button::None;
-    else if (value < 300)   return Button::None;
-    else if (value < 500)   return Button::Left;
-    else if (value < 700)   return Button::Select;
-    else                    return Button::None;   
+    switch (value)
+    {
+        case 1000 ... 1023: return Button::None;
+        case 500 ... 699:   return Button::Select;
+        case 300 ... 499:   return Button::Left;
+        case 0 ... 49:      return Button::Right;
+        default:            return Button::None;
+    }
 }
 
 void TaskGameLoop(void *pvParameters __attribute__((unused)))

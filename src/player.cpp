@@ -1,82 +1,70 @@
-enum class PlayerColor
+#include "player.hpp"
+#include "enums.hpp"
+
+Player::Player(PlayerColor color)
 {
-    White,
-    Black,
-    PlayerColor_MAX
-};
+    this->color = color;
+    ticksLeft = 0;
+    incrementAmount = 0;
+    delay = 0;
+}
 
-class Player
+int Player::getMinutes() { return ticksLeft / 600; }
+int Player::getSeconds() { return (ticksLeft / 10) % 60; }
+int Player::getTenths() { return ticksLeft % 10; }
+int Player::getDelayBar()
 {
-private:
-    PlayerColor color;
-    long ticksLeft;
-    int incrementAmount;
-    int delay;
-
-public:
-    Player(PlayerColor color) 
+    // The return value is calculated from a fraction of delay / incrementAmount and scaled to 0 - 7.
+    if (incrementAmount == 0)
     {
-        this->color = color;
-        ticksLeft = 0;
-        incrementAmount = 0;
-        delay = 0;
-    };
-
-    void initialize(int minutes, int increment)
-    {
-        ticksLeft = minutes * 600l;
-        incrementAmount = increment * 10;
-        delay = incrementAmount;
+        return 0;
     }
+    return (delay * 8) / incrementAmount;
+}
 
-    int getMinutes()        { return ticksLeft / 600;               }
-    int getSeconds()        { return (ticksLeft / 10) % 60;         }
-    int getTenths()         { return ticksLeft % 10;                }
-    bool isOutOfTime()      { return ticksLeft == 0;                }
-    bool isInDanger()       { return ticksLeft <= 100;              }
-    bool isBlack()          { return color == PlayerColor::Black;   }
+bool Player::isOutOfTime() { return ticksLeft == 0; }
+bool Player::isInDanger() { return ticksLeft <= 100; }
+bool Player::isBlack() { return color == PlayerColor::Black; }
+bool Player::isWhite() { return color == PlayerColor::White; }
 
-    bool isWhite()          { return color == PlayerColor::White;   }
+void Player::initialize(int minutes, int increment)
+{
+    ticksLeft = minutes * 600l;
+    incrementAmount = increment * 10;
+    delay = incrementAmount;
+}
 
-    int getDelayBar()
+void Player::decrement()
+{
+    if (ticksLeft > 0)
     {
-        // The return value is calculated from a fraction of delay / incrementAmount and scaled to 0 - 7.
-        if (incrementAmount == 0){ return 0; }
-        return (delay * 8) / incrementAmount;
+        ticksLeft--;
     }
+}
 
-    void decrement()
-    {
-        if (ticksLeft > 0)
-        {
-            ticksLeft--;
-        }
-    }
+void Player::increment()
+{
+    ticksLeft += incrementAmount;
+}
 
-    void increment()
-    {
-        ticksLeft += incrementAmount;
-    }
+void Player::incrementOneTick()
+{
+    ticksLeft++;
+}
 
-    void incrementOneTick()
+void Player::delayOrDecrement()
+{
+    if (delay > 0)
     {
-        ticksLeft++;
+        delay--;
     }
+    else
+    {
+        decrement();
+    }
+}
 
-    void delayOrDecrement()
-    {
-        if (delay > 0)
-        {
-            delay--;
-        }
-        else
-        {
-            decrement();
-        }
-    }
-
-    void resetDelay()
-    {
-        delay = incrementAmount;
-    }
-};
+void Player::resetDelay()
+{
+    delay = incrementAmount;
+}
