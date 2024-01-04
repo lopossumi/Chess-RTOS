@@ -46,6 +46,7 @@ void loop() {}
 /** 
  * Print setpoints for minutes and seconds on the second row of the LCD.
  * Time is in the format m + ss
+ * 
  * ### Examples ###
  * ```
  *     15m + 30s   
@@ -57,6 +58,20 @@ void printSetpoints()
 {
     lcd.setCursor(0, 1);
     snprintf(buffer, 17, "%6dm + %02ds   ", playtimeMinutes, incrementSeconds);
+    lcd.print(buffer);
+}
+
+void printTimesWithoutTenths()
+{
+    lcd.setCursor(0, 1);
+    snprintf(&buffer[0], 17, "%d:%02d           ",
+        black.getMinutes(),
+        black.getSeconds());
+
+    snprintf(&buffer[10], 7, "%3d:%02d",
+        white.getMinutes(),
+        white.getSeconds());
+
     lcd.print(buffer);
 }
 
@@ -80,6 +95,9 @@ void printMinutesOnly()
 /** 
  * Print times for black and white players on the second row of the LCD.
  * Time is in the format mm:ss.t
+ * 
+ * Todo: Handle times greater than 99 minutes.
+ * 
  * ### Examples
  * ```
  * 15:30.0  15:30.0
@@ -88,11 +106,23 @@ void printMinutesOnly()
  */
 void printTimes()
 {
+    if(black.getMinutes() > 99 || white.getMinutes() > 99)
+    {
+        printTimesWithoutTenths();
+        return;
+    }
+
     lcd.setCursor(0, 1);
     snprintf(&buffer[0], 17, "%d:%02d.%d         ",
-        black.getMinutes(), black.getSeconds(), black.getTenths());
+        black.getMinutes(),
+        black.getSeconds(),
+        black.getTenths());
+
     snprintf(&buffer[9], 8, "%2d:%02d.%d",
-        white.getMinutes(), white.getSeconds(), white.getTenths());
+        white.getMinutes(),
+        white.getSeconds(),
+        white.getTenths());
+
     lcd.print(buffer);
 }
 
@@ -102,8 +132,9 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
     {
         if(blink)
         {
-            lcd.clear();
+            lcd.noDisplay();
             vTaskDelay(pdMS_TO_TICKS(100));
+            lcd.display();
         }
 
         lcd.setCursor(0, 0);
