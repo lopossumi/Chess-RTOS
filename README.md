@@ -7,22 +7,68 @@ This project is a chess clock running on Arduino Uno. It's built on top of FreeR
 
 It is by no means a tournament-worthy timepiece, but works nonetheless.
 
-# Why?
+## Table of contents
+- [Why?](#why)
+- [Hardware](#hardware)
+- [Usage](#usage)
+    - [Select mode](#select-mode)
+    - [Set minutes](#set-minutes)
+    - [Set increment](#set-increment)
+    - [Ready to start](#ready-to-start)
+    - [During the game](#during-the-game)
+    - [Game over](#game-over)
+- [Installation](#installation)
+- [Pictures](#pictures)
+- [License](#license)
+
+## Why?
 I wanted a game clock, and had a bunch of Arduinos lying around. It was also a good opportunity to try out embedded development with GitHub copilot.
 
-# Features
-The clock has a bunch of modes to choose from:
-* Sudden Death
-* Fischer
-* Hourglass
-* Simple Delay
-* (TODO: Byo-Yomi)
+## Hardware
+To build this chess clock, you'll need the following hardware components:
+* Arduino Uno
+* 16x2 HD44780 liquid crystal display (LCD) shield with buttons
 
-# Installation
+The program uses 3 hardware buttons: Select, Left (black player) and Right (white player).
+
+## Usage
+### Select mode
+Choose from the following modes:
+
+| Mode          | Description                                                  |
+| ------------- | ------------------------------------------------------------ |
+| Sudden Death  | Absolute mode: Game ends when either player runs out of time |
+| Fischer       | Increment is added to remaining time at the end of turn      |
+| Hourglass     | Opponent's time increases during turn                        |
+| Simple Delay  | Delay for n seconds every turn before clock starts running   |
+
+### Set minutes
+Set the amount of play time in minutes (1...90).
+* Cycle between options with Left and Right buttons
+* Press Select to continue to next screen.
+
+### Set increment
+Set the amount of time added at the end of turn (Fischer) or delay before clock starts running (Simple Delay).
+This screen is not shown in Sudden Death or Hourglass modes.
+* Cycle between options with Left and Right buttons
+* Press Select to continue to next screen.
+
+### Ready to start
+* Press Select to store settings to EEPROM
+* Opponent starts the clock.
+
+### During the game
+* Select pauses/continues the game
+* End turn by pressing your own key.
+
+### Game over
+* Press select to return to minute settings.
+
+## Installation
+Open the project in [PlatformIO](https://platformio.org), compile and flash to Arduino Uno. You may need to install dependencies first.
+
+## Pictures
 TODO
 
-# Pictures
-TODO
-
-# License
+## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

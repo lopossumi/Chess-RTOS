@@ -12,9 +12,13 @@ Player::Player(PlayerColor color)
 int Player::getMinutes() { return ticksLeft / 600; }
 int Player::getSeconds() { return (ticksLeft / 10) % 60; }
 int Player::getTenths() { return ticksLeft % 10; }
+
+/* 
+* The delay bar is a visual representation of the delay time remaining, scaled to 0 - 7.
+* It can be printed to the LCD as a bar graph using custom characters.
+*/
 int Player::getDelayBar()
 {
-    // The return value is calculated from a fraction of delay / incrementAmount and scaled to 0 - 7.
     if (incrementAmount == 0)
     {
         return 0;
