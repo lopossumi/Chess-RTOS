@@ -1,5 +1,5 @@
-#include <Arduino_FreeRTOS.h>
 #include <Arduino.h>
+#include <Arduino_FreeRTOS.h>
 #include <EEPROM.h>
 #include <LiquidCrystal.h>
 #include <Wire.h>
@@ -28,6 +28,15 @@ char buffer[17] = "";
 
 void setup()
 {
+    lcd.createChar(0, bar0);
+    lcd.createChar(1, bar1);
+    lcd.createChar(2, bar2);
+    lcd.createChar(3, bar3);
+    lcd.createChar(4, bar4);
+    lcd.createChar(5, bar5);
+    lcd.createChar(6, bar6);
+    lcd.createChar(7, bar7);
+
     timerMode = (TimerMode)EEPROM.read(0);
     playtimeMinutes = EEPROM.read(1);
     incrementSeconds = EEPROM.read(2);
@@ -113,16 +122,20 @@ void printTimes()
     }
 
     lcd.setCursor(0, 1);
-    snprintf(&buffer[0], 17, "%d:%02d.%d         ",
+    snprintf(&buffer[0], 8, "%d:%02d.%d",
         black.getMinutes(),
         black.getSeconds(),
         black.getTenths());
+    lcd.print(buffer);
 
-    snprintf(&buffer[9], 8, "%2d:%02d.%d",
+    lcd.write(byte(black.getDelayBar()));
+    lcd.write(byte(white.getDelayBar()));
+    
+    lcd.setCursor(9, 1);
+    snprintf(&buffer[0], 8, "%2d:%02d.%d",
         white.getMinutes(),
         white.getSeconds(),
         white.getTenths());
-
     lcd.print(buffer);
 }
 
@@ -141,6 +154,16 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
         switch (currentState)
         {
         case ClockState::Welcome:
+            lcd.write(byte(0));
+            lcd.write(byte(1));
+            lcd.write(byte(2));
+            lcd.write(byte(3));
+            lcd.write(byte(4));
+            lcd.write(byte(5));
+            lcd.write(byte(6));
+            lcd.write(byte(7));
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            lcd.setCursor(0, 0);
             lcd.print("Chess Clock v1.0");
             lcd.setCursor(0, 1);
             lcd.print(" (c) milo 2024  ");
@@ -202,15 +225,15 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
     }
 }
 
-ButtonState convertButtonState(int value)
+Button convertButtonState(int value)
 {
-    if (value >= 1000)      return ButtonState::None;
-    else if (value < 50)    return ButtonState::Right;
-    else if (value < 150)   return ButtonState::None;
-    else if (value < 300)   return ButtonState::None;
-    else if (value < 500)   return ButtonState::Left;
-    else if (value < 700)   return ButtonState::Select;
-    else                    return ButtonState::None;   
+    if (value >= 1000)      return Button::None;
+    else if (value < 50)    return Button::Right;
+    else if (value < 150)   return Button::None;
+    else if (value < 300)   return Button::None;
+    else if (value < 500)   return Button::Left;
+    else if (value < 700)   return Button::Select;
+    else                    return Button::None;   
 }
 
 void TaskGameLoop(void *pvParameters __attribute__((unused)))
@@ -282,13 +305,13 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
     for (;;)
     {
         // Read button value. Debounce by averaging 2 readings.
-        int temp = analogRead(0);
-        int value = temp;
-        while (temp < 1000)
+        int reading = analogRead(0);
+        int value = reading;
+        while (reading < 1000)
         {
-            value += temp;
+            value += reading;
             value /= 2;
-            temp = analogRead(0);
+            reading = analogRead(0);
             vTaskDelay(1);
         }
         auto button = convertButtonState(value);
@@ -307,17 +330,17 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
             case ClockState::ModeSet:
                 switch (button)
                 {
-                    case ButtonState::Select:
+                    case Button::Select:
                         currentState = ClockState::MinuteSet;
                         break;
 
-                    case ButtonState::Left:
+                    case Button::Left:
                         timerMode = (timerMode <= (TimerMode)0) 
                             ? (TimerMode)((int)TimerMode::TimerMode_MAX - 1) 
                             : (TimerMode)((int)timerMode - 1);
                         break;
 
-                    case ButtonState::Right:
+                    case Button::Right:
                         timerMode = (timerMode >= (TimerMode)((int)TimerMode::TimerMode_MAX - 1)) 
                             ? (TimerMode)0 
                             : (TimerMode)((int)timerMode + 1);
@@ -336,7 +359,7 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
             case ClockState::MinuteSet:
                 switch (button)
                 {
-                    case ButtonState::Select:
+                    case Button::Select:
                         switch (timerMode)
                         {
                             case TimerMode::SuddenDeath:
@@ -352,14 +375,14 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
                         }
                         break;
 
-                    case ButtonState::Left:
+                    case Button::Left:
                         if(playtimeMinutes > 60) playtimeMinutes = 60;
                         else if(playtimeMinutes > 15) playtimeMinutes -= 15;
                         else if(playtimeMinutes > 5) playtimeMinutes -= 5;
                         else if(playtimeMinutes > 1) playtimeMinutes -= 1;
                         break;
 
-                    case ButtonState::Right:
+                    case Button::Right:
                         if(playtimeMinutes < 5) playtimeMinutes += 1;
                         else if(playtimeMinutes < 15) playtimeMinutes += 5;
                         else if(playtimeMinutes < 60) playtimeMinutes += 15;
@@ -378,17 +401,17 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
             case ClockState::SecondSet:
                 switch (button)
                 {
-                    case ButtonState::Select:
+                    case Button::Select:
                         black.initialize(playtimeMinutes, incrementSeconds);
                         white.initialize(playtimeMinutes, incrementSeconds);
                         currentState = ClockState::Ready;
                         break;
 
-                    case ButtonState::Left:
+                    case Button::Left:
                         incrementSeconds = (incrementSeconds > 0) ? incrementSeconds - 5 : 0;
                         break;
 
-                    case ButtonState::Right:
+                    case Button::Right:
                         incrementSeconds = (incrementSeconds < 60) ? incrementSeconds + 5 : 60;
                         break;
                 
@@ -404,18 +427,18 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
             case ClockState::Ready:
                 switch (button)
                 {
-                    case ButtonState::Select:
+                    case Button::Select:
                         EEPROM.write(0, (int)timerMode);
                         EEPROM.write(1, playtimeMinutes);
                         EEPROM.write(2, incrementSeconds);
                         break;
-                    case ButtonState::Left:
+                    case Button::Left:
                         currentPlayer = &white;
                         otherPlayer = &black;
                         currentState = ClockState::Play;                        
                         break;
 
-                    case ButtonState::Right:
+                    case Button::Right:
                         currentPlayer = &black;
                         otherPlayer = &white;
                         currentState = ClockState::Play;
@@ -433,15 +456,15 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
             case ClockState::Play:
                 switch (button)
                 {
-                    case ButtonState::Select:
+                    case Button::Select:
                         blink = true;
                         currentState = ClockState::Pause;
                         break;
                     
-                    case ButtonState::Left:
-                    case ButtonState::Right:
-                        if (button == ButtonState::Left && currentPlayer->isWhite()) break;
-                        if (button == ButtonState::Right && currentPlayer->isBlack()) break;
+                    case Button::Left:
+                    case Button::Right:
+                        if (button == Button::Left && currentPlayer->isWhite()) break;
+                        if (button == Button::Right && currentPlayer->isBlack()) break;
 
                         switch (timerMode)
                         {
@@ -454,10 +477,17 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
                             default:
                                 break;
                         }
-                        Player *temp = currentPlayer;
-                        currentPlayer = otherPlayer;
-                        otherPlayer = temp;
+                        
+                        {
+                            Player *p = currentPlayer;
+                            currentPlayer = otherPlayer;
+                            otherPlayer = p;
+                        }
+                        
                         break;
+                    
+                    default:
+                        break;               
                 }
                 break;
 
@@ -468,7 +498,7 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
             case ClockState::Pause:
                 switch (button)
                 {
-                    case ButtonState::Select:
+                    case Button::Select:
                         blink = false;
                         currentState = ClockState::Play;
                         break;
@@ -485,7 +515,7 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
             case ClockState::GameOver:
                 switch (button)
                 {
-                    case ButtonState::Select:
+                    case Button::Select:
                         currentState = ClockState::MinuteSet;
                         break;
                 

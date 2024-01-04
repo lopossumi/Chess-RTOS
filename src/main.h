@@ -10,7 +10,7 @@ enum class TimerMode
     TimerMode_MAX = 4
 };
 
-enum class ButtonState
+enum class Button
 {
     None,
     Select,
@@ -36,6 +36,86 @@ struct Timer
 {
     int time_minutes;
     int inc_seconds;
+};
+
+byte bar0[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+};
+
+byte bar1[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B11111,
+};
+
+byte bar2[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B11111,
+  B11111,
+};
+
+byte bar3[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B11111,
+  B11111,
+  B11111,
+};
+
+byte bar4[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+};
+
+byte bar5[8] = {
+  B00000,
+  B00000,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+};
+
+byte bar6[8] = {
+  B00000,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+};
+
+byte bar7[8] = {
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
 };
 
 #endif // MAIN_H
