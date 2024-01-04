@@ -5,6 +5,7 @@
 #include <Wire.h>
 
 #include "enums.hpp"
+#include "barDisplay.hpp"
 #include "player.hpp"
 #include "main.hpp"
 
@@ -30,14 +31,7 @@ char buffer[17] = "";
 
 void setup()
 {
-    lcd.createChar(0, bar0);
-    lcd.createChar(1, bar1);
-    lcd.createChar(2, bar2);
-    lcd.createChar(3, bar3);
-    lcd.createChar(4, bar4);
-    lcd.createChar(5, bar5);
-    lcd.createChar(6, bar6);
-    lcd.createChar(7, bar7);
+    initializeBarDisplay(lcd);
 
     timerMode = (TimerMode)EEPROM.read(0);
     playtimeMinutes = EEPROM.read(1);
@@ -50,6 +44,8 @@ void setup()
     xTaskCreate( TaskUpdateScreen,  "UpdateScreen", 256,    NULL,   2,    NULL );
     xTaskCreate( TaskReadButton,    "ReadButton",   128,    NULL,   1,    NULL );
     xTaskCreate( TaskGameLoop,      "GameLoop",     128,    NULL,   3,    NULL );
+
+    vTaskStartScheduler();
 }
 
 void loop() {}
@@ -156,15 +152,6 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
         switch (currentState)
         {
         case ClockState::Welcome:
-            lcd.write(byte(0));
-            lcd.write(byte(1));
-            lcd.write(byte(2));
-            lcd.write(byte(3));
-            lcd.write(byte(4));
-            lcd.write(byte(5));
-            lcd.write(byte(6));
-            lcd.write(byte(7));
-            vTaskDelay(pdMS_TO_TICKS(1000));
             lcd.setCursor(0, 0);
             lcd.print("Chess Clock v1.0");
             lcd.setCursor(0, 1);

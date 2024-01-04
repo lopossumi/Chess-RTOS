@@ -10,7 +10,7 @@ private:
     int delay;
 
 public:
-    Player(PlayerColor color);
+    explicit Player(PlayerColor color);
     int getMinutes();
     int getSeconds();
     int getTenths();
