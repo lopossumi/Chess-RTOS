@@ -6,7 +6,7 @@ Player::Player(PlayerColor color)
     this->color = color;
     ticksLeft = 0;
     incrementAmount = 0;
-    delay = 0;
+    delaySecondsLeft = 0;
 }
 
 int Player::getMinutes() { return ticksLeft / 600; }
@@ -23,7 +23,7 @@ int Player::getDelayBar()
     {
         return 0;
     }
-    return (delay * 8) / incrementAmount;
+    return (delaySecondsLeft * 8) / incrementAmount;
 }
 
 bool Player::isOutOfTime() { return ticksLeft == 0; }
@@ -35,7 +35,7 @@ void Player::initialize(int minutes, int increment)
 {
     ticksLeft = minutes * 600l;
     incrementAmount = increment * 10;
-    delay = incrementAmount;
+    delaySecondsLeft = incrementAmount;
 }
 
 void Player::decrement()
@@ -58,9 +58,9 @@ void Player::incrementOneTick()
 
 void Player::delayOrDecrement()
 {
-    if (delay > 0)
+    if (delaySecondsLeft > 0)
     {
-        delay--;
+        delaySecondsLeft--;
     }
     else
     {
@@ -70,5 +70,5 @@ void Player::delayOrDecrement()
 
 void Player::resetDelay()
 {
-    delay = incrementAmount;
+    delaySecondsLeft = incrementAmount;
 }

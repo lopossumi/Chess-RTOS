@@ -7,7 +7,7 @@ private:
     PlayerColor color;
     long ticksLeft;
     int incrementAmount;
-    int delay;
+    int delaySecondsLeft;
 
 public:
     explicit Player(PlayerColor color);

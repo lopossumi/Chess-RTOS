@@ -17,6 +17,7 @@ void TaskReadButton(void *pvParameters);
 void TaskGameLoop(void *pvParameters);
 
 ClockState currentState;
+
 TimerMode timerMode;
 
 Player black = Player(PlayerColor::Black);
@@ -63,14 +64,12 @@ void loop() {}
  */
 void printSetpoints()
 {
-    lcd.setCursor(0, 1);
     snprintf(buffer, 17, "%6dm + %02ds   ", playtimeMinutes, incrementSeconds);
     lcd.print(buffer);
 }
 
 void printTimesWithoutTenths()
 {
-    lcd.setCursor(0, 1);
     snprintf(&buffer[0], 17, "%d:%02d           ",
         black.getMinutes(),
         black.getSeconds());
@@ -94,7 +93,6 @@ void printTimesWithoutTenths()
  */
 void printMinutesOnly()
 {
-    lcd.setCursor(0, 1);
     snprintf(buffer, 17, "%8dm       ", playtimeMinutes);
     lcd.print(buffer);
 }
@@ -120,7 +118,7 @@ void printTimes()
     }
 
     lcd.setCursor(0, 1);
-    snprintf(&buffer[0], 8, "%d:%02d.%d",
+    snprintf(&buffer[0], 8, "%d:%02d.%d   ",
         black.getMinutes(),
         black.getSeconds(),
         black.getTenths());
@@ -137,8 +135,44 @@ void printTimes()
     lcd.print(buffer);
 }
 
+const char* getHeader(ClockState state, bool isBlack)
+{
+    switch (state)
+    {
+        case ClockState::Welcome:       return WELCOME1;
+        case ClockState::ModeSet:       return SELECT_MODE;
+        case ClockState::MinuteSet:     return SET_MINUTES;
+        case ClockState::SecondSet:     return SET_SECONDS;
+        case ClockState::Ready:         return READY_TO_START;
+        case ClockState::Play:          return isBlack ? BLACK_TO_PLAY : WHITE_TO_PLAY;
+        case ClockState::Pause:         return isBlack ? BLACK_TO_PLAY : WHITE_TO_PLAY;
+        case ClockState::GameOver:      return isBlack ? WHITE_WINS : BLACK_WINS;
+        default:                        return "";
+    }
+}
+
+const char* getTimerModeName(TimerMode mode)
+{
+    switch (mode)
+    {
+        case TimerMode::SuddenDeath:    return SUDDEN_DEATH;
+        case TimerMode::Hourglass:      return HOURGLASS;
+        case TimerMode::Fischer:        return FISCHER;
+        case TimerMode::SimpleDelay:    return SIMPLE_DELAY;
+        default:                        return UNKNOWN;
+    }
+}
+
 void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
 {
+    // Show welcome animation
+    lcd.setCursor(0, 0); lcd.print(WELCOME1);
+    lcd.setCursor(0, 1); lcd.print(WELCOME2);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    lcd.setCursor(0, 0); lcd.print(WELCOME3);
+    lcd.setCursor(0, 1); lcd.print(WELCOME4);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+
     for (;;)
     {
         if(blink)
@@ -148,68 +182,24 @@ void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
             lcd.display();
         }
 
+        // Print header
         lcd.setCursor(0, 0);
+        lcd.print(getHeader(currentState, currentPlayer->isBlack()));
+
+        lcd.setCursor(0, 1);
         switch (currentState)
         {
-        case ClockState::Welcome:
-            lcd.setCursor(0, 0);
-            lcd.print("Chess Clock v1.0");
-            lcd.setCursor(0, 1);
-            lcd.print(" (c) milo 2024  ");
-            vTaskDelay(pdMS_TO_TICKS(1000));
-            lcd.setCursor(0, 0);
-            lcd.print("\xc1\xaa\xbd \xa5 \xb8\xdb\xaf\xb8  v1.0");
-            lcd.setCursor(0, 1);
-            lcd.print(" (c)  \xd0\xdb  2024    ");
-            vTaskDelay(pdMS_TO_TICKS(1000));
-            break;
+            case ClockState::ModeSet:       lcd.print(getTimerModeName(timerMode));     break;
+            case ClockState::MinuteSet:     printMinutesOnly();                         break;
+            case ClockState::SecondSet:     printSetpoints();                           break;
+            case ClockState::Ready:         printTimes();                               break;
+            case ClockState::Play:          printTimes();                               break;
+            case ClockState::Pause:         printTimes();                               break;
+            case ClockState::GameOver:      printTimes();                               break;
 
-        case ClockState::ModeSet:
-            lcd.print("Select mode:    ");
-            lcd.setCursor(0, 1);
-            switch (timerMode)
-            {
-                case TimerMode::SuddenDeath:    lcd.print("\x7f Sudden Death \x7e"); break;
-                case TimerMode::Hourglass:      lcd.print("\x7f Hourglass    \x7e"); break;
-                case TimerMode::Fischer:        lcd.print("\x7f Fischer      \x7e"); break;
-                case TimerMode::SimpleDelay:    lcd.print("\x7f Simple Delay \x7e"); break;
-                default:                        lcd.print("\x7f Unknown      \x7e"); break;
-            }
-            break;
-
-        case ClockState::MinuteSet:
-            lcd.print("Set minutes:    ");
-            printMinutesOnly();
-            break;
-
-        case ClockState::SecondSet:
-            lcd.print("Set increment:  ");
-            printSetpoints();
-            break;
-
-        case ClockState::Ready:
-            lcd.print(" Ready to Start ");
-            printTimes();
-            break;
-
-        case ClockState::Play:
-        case ClockState::Pause:
-            if(currentPlayer->isBlack())    { lcd.print("\x7f Black         "); }
-            else                            { lcd.print("         White \x7e"); }
-            printTimes();
-            break;
-
-        case ClockState::GameOver:
-            lcd.print("   Game Over    ");
-            lcd.setCursor(0, 1);
-            if(currentPlayer->isBlack())    { lcd.print("   White wins! \x7e"); }
-            else                            { lcd.print("\x7f  Black wins!  "); }
-            break;
-
-        default:
-            break;
+            default:
+                break;
         }
-
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
@@ -305,7 +295,8 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
             vTaskDelay(1);
         }
         auto button = convertButtonState(value);
-        
+        if(button == Button::None) continue;
+
         switch (currentState)
         {
             // Welcome screen:
@@ -345,7 +336,7 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
             // * Select button continues to next screen
             // * Left button decrements minutes
             // * Right button increments minutes
-            // * Minute options are 1, 2, 3, 5, 10, 15, 20, 25, 30, 45, 60, 90
+            // * Minute options are 1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 45, 60, 90
             case ClockState::MinuteSet:
                 switch (button)
                 {
@@ -354,8 +345,6 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
                         {
                             case TimerMode::SuddenDeath:
                             case TimerMode::Hourglass:
-                                black.initialize(playtimeMinutes, incrementSeconds);
-                                white.initialize(playtimeMinutes, incrementSeconds);
                                 currentState = ClockState::Ready;
                                 break;
 
@@ -366,17 +355,27 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
                         break;
 
                     case Button::Left:
-                        if(playtimeMinutes > 60) playtimeMinutes = 60;
-                        else if(playtimeMinutes > 15) playtimeMinutes -= 15;
-                        else if(playtimeMinutes > 5) playtimeMinutes -= 5;
-                        else if(playtimeMinutes > 1) playtimeMinutes -= 1;
+                        switch (playtimeMinutes)
+                        {
+                            case 61 ... 90: playtimeMinutes = 60;   break;
+                            case 31 ... 60: playtimeMinutes -= 15;  break;
+                            case 6  ... 30: playtimeMinutes -= 5;   break;
+                            case 2  ...  5: playtimeMinutes -= 1;   break;
+                            default:
+                                break;
+                        }
                         break;
 
                     case Button::Right:
-                        if(playtimeMinutes < 5) playtimeMinutes += 1;
-                        else if(playtimeMinutes < 15) playtimeMinutes += 5;
-                        else if(playtimeMinutes < 60) playtimeMinutes += 15;
-                        else if(playtimeMinutes < 90 ) playtimeMinutes = 90;
+                        switch(playtimeMinutes)
+                        {
+                            case 1  ...  4: playtimeMinutes += 1;   break;
+                            case 5  ... 29: playtimeMinutes += 5;   break;
+                            case 30 ... 59: playtimeMinutes += 15;  break;
+                            case 60 ... 90: playtimeMinutes = 90;   break;
+                            default:
+                                break;
+                        }
                         break;
                 
                     default:
@@ -392,8 +391,6 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
                 switch (button)
                 {
                     case Button::Select:
-                        black.initialize(playtimeMinutes, incrementSeconds);
-                        white.initialize(playtimeMinutes, incrementSeconds);
                         currentState = ClockState::Ready;
                         break;
 
@@ -506,7 +503,7 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
                 switch (button)
                 {
                     case Button::Select:
-                        currentState = ClockState::MinuteSet;
+                        currentState = ClockState::ModeSet;
                         break;
                 
                     default:
