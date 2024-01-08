@@ -14,7 +14,6 @@ void TaskUpdateScreen(void *pvParameters);
 void TaskReadButton(void *pvParameters);
 void TaskGameLoop(void *pvParameters);
 
-ClockState currentState;
 TimerMode timerMode;
 
 int playtimeMinutes;
@@ -28,8 +27,6 @@ void setup()
     timerMode = (TimerMode)EEPROM.read(0);
     playtimeMinutes = EEPROM.read(1);
     incrementSeconds = EEPROM.read(2);
-
-    currentState = ClockState::Welcome;
 
     // FreeRTOS  Function Name      Task Name       Stack   Params  Prio  Handle
     xTaskCreate( TaskUpdateScreen,  "UpdateScreen", 256,    (void*)&gameState,   2,    NULL ); // Pass the address of gameState
@@ -57,7 +54,7 @@ void TaskGameLoop(void *pvParameters __attribute__((unused)))
 {
     for(;;)
     {
-        switch (currentState)
+        switch (gameState.getCurrentState())
         {
             case ClockState::Welcome:
                 vTaskDelay(pdMS_TO_TICKS(3000));
@@ -84,23 +81,22 @@ void TaskGameLoop(void *pvParameters __attribute__((unused)))
                 break;
 
             case ClockState::Play:
-                blink = currentPlayer->isInDanger();
                 switch(timerMode)
                 {
                     case TimerMode::SimpleDelay:
-                        currentPlayer->delayOrDecrement();
+                        gameState.delayOrDecrementCurrentPlayer();
                         break;
 
                     case TimerMode::Hourglass:
-                        otherPlayer->incrementOneTick();
-                        currentPlayer->decrement();
+                        gameState.incrementOtherOneTick();
+                        gameState.decrementCurrentPlayer();
                         break;
 
                     default:
-                        currentPlayer->decrement();
+                        gameState.decrementCurrentPlayer();
                         break;
                 }
-                if(currentPlayer->isOutOfTime())
+                if(gameState.isBlackOutOfTime() || gameState.isWhiteOutOfTime())
                 {
                     currentState = ClockState::GameOver;
                     blink = false;
@@ -257,14 +253,12 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
                         EEPROM.write(2, incrementSeconds);
                         break;
                     case Button::Left:
-                        currentPlayer = &white;
-                        otherPlayer = &black;
+                        gameState.setCurrentPlayerToWhite();
                         currentState = ClockState::Play;                        
                         break;
 
                     case Button::Right:
-                        currentPlayer = &black;
-                        otherPlayer = &white;
+                        gameState.setCurrentPlayerToBlack();
                         currentState = ClockState::Play;
                         break;
                 
@@ -287,26 +281,21 @@ void TaskReadButton(void *pvParameters __attribute__((unused)))
                     
                     case Button::Left:
                     case Button::Right:
-                        if (button == Button::Left && currentPlayer->isWhite()) break;
-                        if (button == Button::Right && currentPlayer->isBlack()) break;
+                        if (button == Button::Left && gameState.isWhiteTurnNow()) break;
+                        if (button == Button::Right && gameState.isBlackTurnNow()) break;
 
                         switch (timerMode)
                         {
                             case TimerMode::SimpleDelay:
-                                currentPlayer->resetDelay();
+                                gameState.resetCurrentPlayerDelay();
                                 break;
                             case TimerMode::Fischer:
-                                currentPlayer->increment();
+                                gameState.incrementCurrentPlayer();
                                 break;
                             default:
                                 break;
                         }
-                        
-                        {
-                            Player *p = currentPlayer;
-                            currentPlayer = otherPlayer;
-                            otherPlayer = p;
-                        }
+                        gameState.toggleCurrentPlayer();
                         
                         break;
                     

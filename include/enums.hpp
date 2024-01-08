@@ -18,6 +18,14 @@ enum class Button
     ButtonState_MAX
 };
 
+enum class MenuItem
+{
+    Mode,
+    Minutes,
+    Seconds,
+    MenuItem_MAX
+};
+
 enum class ClockState
 {
     Welcome,

@@ -3,6 +3,7 @@
 #include <LiquidCrystal.h>
 #include <Wire.h>
 
+#include "gameState.hpp"
 #include "taskUpdateScreen.hpp"
 #include "textResources.hpp"
 #include "barDisplay.hpp"
@@ -28,15 +29,11 @@ void TaskUpdateScreen(void *pvParameters)
 
     for (;;)
     {
-        bool blink = false;
-        bool isBlack = true;
-        auto currentState = ClockState::ModeSet;
-        auto timerMode = TimerMode::SuddenDeath;
-        Player black(PlayerColor::Black);
-        Player white(PlayerColor::White);
-        int minutes = 0;
-        int seconds = 0;
+        GameState* gameState = static_cast<GameState*>(pvParameters);
 
+        bool blink = gameState->isPausedNow()
+            || gameState->isBlackInDanger()
+            || gameState->isWhiteInDanger();
         if(blink)
         {
             lcd.noDisplay();
@@ -46,20 +43,30 @@ void TaskUpdateScreen(void *pvParameters)
 
         // Print header
         lcd.setCursor(0, 0);
-        lcd.print(getHeader(currentState, isBlack));
+        lcd.print(getHeader(gameState->getCurrentMenuItem(), gameState->isBlackTurnNow()));
 
         lcd.setCursor(0, 1);
-        switch (currentState)
+        if (gameState->isMenuOpenNow())
         {
-        case ClockState::ModeSet:
-            lcd.print(getTimerModeName(timerMode));
-            break;
-        case ClockState::MinuteSet:
-            printMinutesOnly(minutes);
-            break;
-        case ClockState::SecondSet:
-            printSetpoints(minutes, seconds);
-            break;
+            switch (gameState->getCurrentMenuItem())
+            {
+            case MenuItem::Mode:
+                lcd.print(getTimerModeName(gameState->getTimerMode()));
+                break;
+            case MenuItem::MinuteSet:
+                printMinutesOnly(gameState->getPlayTimeMinutes());
+                break;
+            case MenuItem::SecondSet:
+                printSetpoints(gameState->getPlayTimeSeconds());
+                break;
+            }
+        }
+        else
+        {
+            printTimes(gameState->getBlackPlayer(), gameState->getWhitePlayer());
+        }
+        {
+
 
         case ClockState::Ready:
         case ClockState::Play:
