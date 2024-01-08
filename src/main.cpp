@@ -5,44 +5,34 @@
 #include <Wire.h>
 
 #include "enums.hpp"
-#include "barDisplay.hpp"
 #include "player.hpp"
+#include "taskUpdateScreen.hpp"
+#include "gameState.hpp"
 #include "main.hpp"
-
-const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
-LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 void TaskUpdateScreen(void *pvParameters);
 void TaskReadButton(void *pvParameters);
 void TaskGameLoop(void *pvParameters);
 
 ClockState currentState;
-
 TimerMode timerMode;
-
-Player black = Player(PlayerColor::Black);
-Player white = Player(PlayerColor::White);
-Player *currentPlayer;
-Player *otherPlayer;
 
 int playtimeMinutes;
 int incrementSeconds;
 bool blink;
-char buffer[17] = "";
+
+GameState gameState = GameState();
 
 void setup()
 {
-    initializeBarDisplay(lcd);
-
     timerMode = (TimerMode)EEPROM.read(0);
     playtimeMinutes = EEPROM.read(1);
     incrementSeconds = EEPROM.read(2);
 
-    lcd.begin(16, 2);
     currentState = ClockState::Welcome;
 
     // FreeRTOS  Function Name      Task Name       Stack   Params  Prio  Handle
-    xTaskCreate( TaskUpdateScreen,  "UpdateScreen", 256,    NULL,   2,    NULL );
+    xTaskCreate( TaskUpdateScreen,  "UpdateScreen", 256,    (void*)&gameState,   2,    NULL ); // Pass the address of gameState
     xTaskCreate( TaskReadButton,    "ReadButton",   128,    NULL,   1,    NULL );
     xTaskCreate( TaskGameLoop,      "GameLoop",     128,    NULL,   3,    NULL );
 
@@ -50,159 +40,6 @@ void setup()
 }
 
 void loop() {}
-
-/** 
- * Print setpoints for minutes and seconds on the second row of the LCD.
- * Time is in the format m + ss
- * 
- * ### Examples ###
- * ```
- *     15m + 30s   
- *     5m + 00s   
- *     90m + 00s   
- * ```
- */
-void printSetpoints()
-{
-    snprintf(buffer, 17, "%6dm + %02ds   ", playtimeMinutes, incrementSeconds);
-    lcd.print(buffer);
-}
-
-void printTimesWithoutTenths()
-{
-    snprintf(&buffer[0], 17, "%d:%02d           ",
-        black.getMinutes(),
-        black.getSeconds());
-
-    snprintf(&buffer[10], 7, "%3d:%02d",
-        white.getMinutes(),
-        white.getSeconds());
-
-    lcd.print(buffer);
-}
-
-/** 
- * Print minutes only on the second row of the LCD.
- * Time is padded with spaces to 8 characters.
- * ### Examples ###
- * ```
- * 15m         
- * 5m         
- * 90m         
- * ```
- */
-void printMinutesOnly()
-{
-    snprintf(buffer, 17, "%8dm       ", playtimeMinutes);
-    lcd.print(buffer);
-}
-
-/** 
- * Print times for black and white players on the second row of the LCD.
- * Time is in the format mm:ss.t
- * 
- * Todo: Handle times greater than 99 minutes.
- * 
- * ### Examples
- * ```
- * 15:30.0  15:30.0
- * 00:03.4  04:59.9
- * ```
- */
-void printTimes()
-{
-    if(black.getMinutes() > 99 || white.getMinutes() > 99)
-    {
-        printTimesWithoutTenths();
-        return;
-    }
-
-    lcd.setCursor(0, 1);
-    snprintf(&buffer[0], 8, "%d:%02d.%d   ",
-        black.getMinutes(),
-        black.getSeconds(),
-        black.getTenths());
-    lcd.print(buffer);
-
-    lcd.write(byte(black.getDelayBar()));
-    lcd.write(byte(white.getDelayBar()));
-    
-    lcd.setCursor(9, 1);
-    snprintf(&buffer[0], 8, "%2d:%02d.%d",
-        white.getMinutes(),
-        white.getSeconds(),
-        white.getTenths());
-    lcd.print(buffer);
-}
-
-const char* getHeader(ClockState state, bool isBlack)
-{
-    switch (state)
-    {
-        case ClockState::Welcome:       return WELCOME1;
-        case ClockState::ModeSet:       return SELECT_MODE;
-        case ClockState::MinuteSet:     return SET_MINUTES;
-        case ClockState::SecondSet:     return SET_SECONDS;
-        case ClockState::Ready:         return READY_TO_START;
-        case ClockState::Play:          return isBlack ? BLACK_TO_PLAY : WHITE_TO_PLAY;
-        case ClockState::Pause:         return isBlack ? BLACK_TO_PLAY : WHITE_TO_PLAY;
-        case ClockState::GameOver:      return isBlack ? WHITE_WINS : BLACK_WINS;
-        default:                        return "";
-    }
-}
-
-const char* getTimerModeName(TimerMode mode)
-{
-    switch (mode)
-    {
-        case TimerMode::SuddenDeath:    return SUDDEN_DEATH;
-        case TimerMode::Hourglass:      return HOURGLASS;
-        case TimerMode::Fischer:        return FISCHER;
-        case TimerMode::SimpleDelay:    return SIMPLE_DELAY;
-        default:                        return UNKNOWN;
-    }
-}
-
-void TaskUpdateScreen(void *pvParameters __attribute__((unused)))
-{
-    // Show welcome animation
-    lcd.setCursor(0, 0); lcd.print(WELCOME1);
-    lcd.setCursor(0, 1); lcd.print(WELCOME2);
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    lcd.setCursor(0, 0); lcd.print(WELCOME3);
-    lcd.setCursor(0, 1); lcd.print(WELCOME4);
-    vTaskDelay(pdMS_TO_TICKS(1000));
-
-    for (;;)
-    {
-        if(blink)
-        {
-            lcd.noDisplay();
-            vTaskDelay(pdMS_TO_TICKS(100));
-            lcd.display();
-        }
-
-        // Print header
-        lcd.setCursor(0, 0);
-        lcd.print(getHeader(currentState, currentPlayer->isBlack()));
-
-        lcd.setCursor(0, 1);
-        switch (currentState)
-        {
-            case ClockState::ModeSet:       lcd.print(getTimerModeName(timerMode));     break;
-            case ClockState::MinuteSet:     printMinutesOnly();                         break;
-            case ClockState::SecondSet:     printSetpoints();                           break;
-            case ClockState::Ready:         printTimes();                               break;
-            case ClockState::Play:          printTimes();                               break;
-            case ClockState::Pause:         printTimes();                               break;
-            case ClockState::GameOver:      printTimes();                               break;
-
-            default:
-                break;
-        }
-        vTaskDelay(pdMS_TO_TICKS(100));
-    }
-}
 
 Button convertButtonState(int value)
 {

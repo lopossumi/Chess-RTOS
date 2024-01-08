@@ -1,12 +1,5 @@
 #pragma once
 
-enum class PlayerColor
-{
-    White,
-    Black,
-    PlayerColor_MAX
-};
-
 enum class TimerMode
 {
     SuddenDeath = 0,

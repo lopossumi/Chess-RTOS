@@ -1,6 +1,12 @@
 #pragma once
 
-#include "enums.hpp"
+enum class PlayerColor
+{
+    White,
+    Black,
+    PlayerColor_MAX
+};
+
 class Player
 {
 private:
