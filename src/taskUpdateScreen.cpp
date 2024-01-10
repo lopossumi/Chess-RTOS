@@ -36,8 +36,7 @@ void TaskUpdateScreen(void *pvParameters)
     {
         GameState *gameState = static_cast<GameState *>(pvParameters);
 
-        bool blink = gameState->isPaused || gameState->isBlackInDanger() || gameState->isWhiteInDanger();
-        if (blink)
+        if (gameState->isBlinking())
         {
             lcd.noDisplay();
             vTaskDelay(pdMS_TO_TICKS(100));
@@ -59,7 +58,7 @@ void TaskUpdateScreen(void *pvParameters)
             case MenuItem::Minutes:
                 printMinutesOnly(gameState->playtimeMinutes);
                 break;
-            case MenuItem::Seconds:
+            case MenuItem::Increment:
                 printSetpoints(gameState->playtimeMinutes, gameState->incrementSeconds);
                 break;
             default:
@@ -179,7 +178,7 @@ const char* getHeader(MenuItem menuItem)
         return SELECT_MODE;
     case MenuItem::Minutes:
         return SET_MINUTES;
-    case MenuItem::Seconds:
+    case MenuItem::Increment:
         return SET_SECONDS;
     default:
         break;

@@ -86,4 +86,15 @@ class GameState
         void setTimerMode();
         void nextTimerMode();
         void previousTimerMode();
+
+        bool isBlinking();
+        void buttonPressed(Button button);
+        void decreaseMinutes();
+        void increaseMinutes();
+        void decreaseIncrement();
+        void increaseIncrement();
+
+        void selectNextMenuOption();
+        void selectPreviousMenuOption();
+        void commitMenuOption();
 };

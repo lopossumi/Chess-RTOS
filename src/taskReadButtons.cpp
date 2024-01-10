@@ -37,30 +37,11 @@ void TaskReadButtons(void *pvParameters)
         digitalWrite(WHITE_LED_GREEN, blackButtonPressed ? LED_ON : LED_OFF);
 
         auto button = whiteButtonPressed ? Button::White : Button::Black;
-        GameState *gameState = static_cast<GameState *>(pvParameters);
-
-        if(gameState->isMenuOpen)
+        if(whiteButtonPressed && blackButtonPressed)
         {
-            switch (gameState->menuItem)
-            {
-                case MenuItem::Mode:
-                    switch(button)
-                    {
-                        case Button::White:
-                            gameState->nextTimerMode();
-                            break;
-                        case Button::Black:
-                            gameState->previousTimerMode();
-                            break;
-                        default:
-                            gameState->setTimerMode();
-                            break;
-                    }
-                    break;
-                default:
-                    break;
-            
-            }
+            button = Button::Select;
         }
+        GameState *gameState = static_cast<GameState *>(pvParameters);
+        gameState->buttonPressed(button);
     }
 }

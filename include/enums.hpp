@@ -21,7 +21,7 @@ enum class MenuItem
 {
     Mode,
     Minutes,
-    Seconds,
+    Increment,
     MenuItem_MAX
 };
 

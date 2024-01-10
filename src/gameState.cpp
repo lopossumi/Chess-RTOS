@@ -114,7 +114,107 @@ void GameState::nextTimerMode()
     timerMode = (timerMode >= (TimerMode)((int)TimerMode::TimerMode_MAX - 1)) ? (TimerMode)0 : (TimerMode)((int)timerMode + 1);
 }
 
-void GameState::setTimerMode()
+bool GameState::isBlinking()
 {
-    menuItem = MenuItem::Minutes;
+    return isPaused || isBlackInDanger() || isWhiteInDanger();
+}
+
+void GameState::decreaseMinutes()
+{
+    switch (playtimeMinutes)
+    {
+        case 61 ... 90: playtimeMinutes = 60;   break;
+        case 31 ... 60: playtimeMinutes -= 15;  break;
+        case 6  ... 30: playtimeMinutes -= 5;   break;
+        case 2  ...  5: playtimeMinutes -= 1;   break;
+        
+        default:
+            break;
+    }
+}
+
+void GameState::increaseMinutes()
+{
+    switch(playtimeMinutes)
+    {
+        case 1  ...  4: playtimeMinutes += 1;   break;
+        case 5  ... 29: playtimeMinutes += 5;   break;
+        case 30 ... 59: playtimeMinutes += 15;  break;
+        case 60 ... 90: playtimeMinutes = 90;   break;
+        
+        default:
+            break;
+    }
+}
+
+
+void GameState::decreaseIncrement()
+{
+    incrementSeconds = (incrementSeconds > 0) ? incrementSeconds - 5 : 0;
+}
+
+void GameState::increaseIncrement()
+{
+    incrementSeconds = (incrementSeconds < 60) ? incrementSeconds + 5 : 60;
+}
+
+void GameState::selectNextMenuOption()
+{
+    switch (menuItem)
+    {
+        case MenuItem::Mode:        nextTimerMode();        break;
+        case MenuItem::Minutes:     increaseMinutes();      break;
+        case MenuItem::Increment:     increaseIncrement();    break;
+        default:
+            break;
+    }
+}
+
+void GameState::selectPreviousMenuOption()
+{    
+    switch (menuItem)
+    {
+        case MenuItem::Mode:        previousTimerMode();    break;
+        case MenuItem::Minutes:     decreaseMinutes();      break;
+        case MenuItem::Increment:     decreaseIncrement();    break;
+        default:
+            break;
+    }
+}
+
+void GameState::commitMenuOption()
+{
+    switch (menuItem)
+    {
+    case MenuItem::Mode:
+        menuItem = MenuItem::Minutes;
+        break;
+
+    case MenuItem::Minutes:
+        menuItem = MenuItem::Increment;
+        break;
+
+    case MenuItem::Increment:
+        menuItem = MenuItem::Mode;
+        isMenuOpen = false;
+        break;
+
+    default:
+        break;
+    }
+}
+
+void GameState::buttonPressed(Button button)
+{
+    if(isMenuOpen){
+        switch (button)
+        {
+            case Button::White:     selectNextMenuOption();         break;
+            case Button::Black:     selectPreviousMenuOption();     break;
+            case Button::Select:    commitMenuOption();             break;
+
+            default:
+                break;    
+        }
+    }
 }
