@@ -5,9 +5,9 @@
 
 void printMinutesOnly(int minutes);
 void printSetpoints(int minutes, int seconds);
-void printTimesWithoutTenths(Player black, Player white);
-void printTimes(Player black, Player white);
-const char* getHeader(MenuItem menuItem, bool isBlack);
+void printTimesWithoutTenths(long blackTicks, long whiteTicks);
+void printTimes(long blackTicks, long whiteTicks);
+const char* getHeader(MenuItem menuItem);
 const char* getTimerModeName(TimerMode mode);
 void TaskUpdateScreen(void *pvParameters);
 void initializeBarDisplay();

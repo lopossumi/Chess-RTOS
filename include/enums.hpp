@@ -11,11 +11,10 @@ enum class TimerMode
 
 enum class Button
 {
-    None,
+    Black,
+    White,
     Select,
-    Left,
-    Right,
-    ButtonState_MAX
+    Button_MAX
 };
 
 enum class MenuItem

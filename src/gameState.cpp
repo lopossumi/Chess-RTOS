@@ -1,14 +1,18 @@
-#include "gameState.hpp"
+#include "gameState.h"
 #include "player.hpp"
 #include "enums.hpp"
 
 GameState::GameState()
 {
+    playtimeMinutes = 0;
+    incrementSeconds = 0;
+
     blackTicksLeft = 0;
     whiteTicksLeft = 0;
     blackDelaySecondsLeft = 0;
     whiteDelaySecondsLeft = 0;
-
+    menuItem = MenuItem::Mode;
+    timerMode = TimerMode::SuddenDeath;
     isMenuOpen = false;
     isBlackTurn = true;
     isGameStarted = false;
@@ -16,8 +20,10 @@ GameState::GameState()
     isGameOver = false;
 }
 
-void GameState::initialize(int minutes, int increment)
+void GameState::initialize(TimerMode timerMode, int minutes, int increment)
 {
+    this->timerMode = timerMode;
+
     playtimeMinutes = minutes;
     incrementSeconds = increment;
 
@@ -27,14 +33,17 @@ void GameState::initialize(int minutes, int increment)
     whiteDelaySecondsLeft = increment * 10;
 }
 
-int GameState::getBlackMinutes() { return blackTicksLeft / 600; }
-int GameState::getWhiteMinutes() { return whiteTicksLeft / 600; }
+long GameState::getBlackTicksLeft() { return blackTicksLeft; }
+long GameState::getWhiteTicksLeft() { return whiteTicksLeft; }
 
-int GameState::getBlackSeconds() { return (blackTicksLeft / 10) % 60; }
-int GameState::getWhiteSeconds() { return (whiteTicksLeft / 10) % 60; }
+// int GameState::getBlackMinutes() { return blackTicksLeft / 600; }
+// int GameState::getWhiteMinutes() { return whiteTicksLeft / 600; }
 
-int GameState::getBlackTenths() { return blackTicksLeft % 10; }
-int GameState::getWhiteTenths() { return whiteTicksLeft % 10; }
+// int GameState::getBlackSeconds() { return (blackTicksLeft / 10) % 60; }
+// int GameState::getWhiteSeconds() { return (whiteTicksLeft / 10) % 60; }
+
+// int GameState::getBlackTenths() { return blackTicksLeft % 10; }
+// int GameState::getWhiteTenths() { return whiteTicksLeft % 10; }
 
 int GameState::getBlackDelayBar() { return incrementSeconds == 0 ? 0 : (blackDelaySecondsLeft * 8) / incrementSeconds; }
 int GameState::getWhiteDelayBar() { return incrementSeconds == 0 ? 0 : (whiteDelaySecondsLeft * 8) / incrementSeconds; }
@@ -91,14 +100,21 @@ void GameState::delayOrDecrementWhite()
 
 void GameState::delayOrDecrementCurrentPlayer() { isBlackTurn ? delayOrDecrementBlack() : delayOrDecrementWhite(); }
 
-void GameState::setCurrentPlayerToBlack() { isBlackTurn = true; }
-void GameState::setCurrentPlayerToWhite() { isBlackTurn = false; }
-void GameState::toggleCurrentPlayer() { isBlackTurn = !isBlackTurn; }
-
 void GameState::resetBlackDelay() { blackDelaySecondsLeft = incrementSeconds; }
 void GameState::resetWhiteDelay() { whiteDelaySecondsLeft = incrementSeconds; }
 void GameState::resetCurrentPlayerDelay() { isBlackTurn ? resetBlackDelay() : resetWhiteDelay(); }
 
-bool GameState::isPausedNow() { return isPaused; }
+void GameState::previousTimerMode()
+{
+    timerMode = (timerMode <= (TimerMode)0) ? (TimerMode)((int)TimerMode::TimerMode_MAX - 1) : (TimerMode)((int)timerMode - 1);
+}
 
-MenuItem GameState::getCurrentMenuItem() { return currentMenuItem; }
+void GameState::nextTimerMode()
+{
+    timerMode = (timerMode >= (TimerMode)((int)TimerMode::TimerMode_MAX - 1)) ? (TimerMode)0 : (TimerMode)((int)timerMode + 1);
+}
+
+void GameState::setTimerMode()
+{
+    menuItem = MenuItem::Minutes;
+}

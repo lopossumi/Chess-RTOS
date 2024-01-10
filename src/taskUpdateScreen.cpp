@@ -1,40 +1,43 @@
 #include <Arduino.h>
 #include <Arduino_FreeRTOS.h>
-#include <LiquidCrystal.h>
+#include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
-#include "gameState.hpp"
+#include "gameState.h"
 #include "taskUpdateScreen.hpp"
 #include "textResources.hpp"
 #include "barDisplay.hpp"
 #include "enums.hpp"
 #include "Player.hpp"
 
-const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
-LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 char buffer[17] = "";
 
 void TaskUpdateScreen(void *pvParameters)
 {
+    lcd.init();
+    lcd.backlight();
     initializeBarDisplay();
-    lcd.begin(16, 2);
 
     // Show welcome animation
-    lcd.setCursor(0, 0); lcd.print(WELCOME1);
-    lcd.setCursor(0, 1); lcd.print(WELCOME2);
+    lcd.setCursor(0, 0);
+    lcd.print(WELCOME1);
+    lcd.setCursor(0, 1);
+    lcd.print(WELCOME2);
     vTaskDelay(pdMS_TO_TICKS(1000));
-    lcd.setCursor(0, 0); lcd.print(WELCOME3);
-    lcd.setCursor(0, 1); lcd.print(WELCOME4);
+    lcd.setCursor(0, 0);
+    lcd.print(WELCOME3);
+    lcd.setCursor(0, 1);
+    lcd.print(WELCOME4);
     vTaskDelay(pdMS_TO_TICKS(1000));
 
+    bool headerUpdated = false;
     for (;;)
     {
-        GameState* gameState = static_cast<GameState*>(pvParameters);
+        GameState *gameState = static_cast<GameState *>(pvParameters);
 
-        bool blink = gameState->isPausedNow()
-            || gameState->isBlackInDanger()
-            || gameState->isWhiteInDanger();
-        if(blink)
+        bool blink = gameState->isPaused || gameState->isBlackInDanger() || gameState->isWhiteInDanger();
+        if (blink)
         {
             lcd.noDisplay();
             vTaskDelay(pdMS_TO_TICKS(100));
@@ -43,40 +46,29 @@ void TaskUpdateScreen(void *pvParameters)
 
         // Print header
         lcd.setCursor(0, 0);
-        lcd.print(getHeader(gameState->getCurrentMenuItem(), gameState->isBlackTurnNow()));
+        lcd.print(getHeader(gameState->menuItem));
 
         lcd.setCursor(0, 1);
-        if (gameState->isMenuOpenNow())
+        if (gameState->isMenuOpen)
         {
-            switch (gameState->getCurrentMenuItem())
+            switch (gameState->menuItem)
             {
             case MenuItem::Mode:
-                lcd.print(getTimerModeName(gameState->getTimerMode()));
+                lcd.print(getTimerModeName(gameState->timerMode));
                 break;
-            case MenuItem::MinuteSet:
-                printMinutesOnly(gameState->getPlayTimeMinutes());
+            case MenuItem::Minutes:
+                printMinutesOnly(gameState->playtimeMinutes);
                 break;
-            case MenuItem::SecondSet:
-                printSetpoints(gameState->getPlayTimeSeconds());
+            case MenuItem::Seconds:
+                printSetpoints(gameState->playtimeMinutes, gameState->incrementSeconds);
+                break;
+            default:
                 break;
             }
         }
         else
         {
-            printTimes(gameState->getBlackPlayer(), gameState->getWhitePlayer());
-        }
-        {
-
-
-        case ClockState::Ready:
-        case ClockState::Play:
-        case ClockState::Pause:
-        case ClockState::GameOver:
-            printTimes(black, white);
-            break;
-
-        default:
-            break;
+            printTimes(gameState->blackTicksLeft, gameState->whiteTicksLeft);
         }
         vTaskDelay(pdMS_TO_TICKS(100));
     }
@@ -84,26 +76,25 @@ void TaskUpdateScreen(void *pvParameters)
 
 void initializeBarDisplay()
 {
-  lcd.createChar(0, bar0);
-  lcd.createChar(1, bar1);
-  lcd.createChar(2, bar2);
-  lcd.createChar(3, bar3);
-  lcd.createChar(4, bar4);
-  lcd.createChar(5, bar5);
-  lcd.createChar(6, bar6);
-  lcd.createChar(7, bar7);
+    lcd.createChar(0, bar0);
+    lcd.createChar(1, bar1);
+    lcd.createChar(2, bar2);
+    lcd.createChar(3, bar3);
+    lcd.createChar(4, bar4);
+    lcd.createChar(5, bar5);
+    lcd.createChar(6, bar6);
+    lcd.createChar(7, bar7);
 }
 
-
-/** 
+/**
  * Print setpoints for minutes and seconds on the second row of the LCD.
  * Time is in the format m + ss
- * 
+ *
  * ### Examples ###
  * ```
- *     15m + 30s   
- *     5m + 00s   
- *     90m + 00s   
+ *     15m + 30s
+ *     5m + 00s
+ *     90m + 00s
  * ```
  */
 void printSetpoints(int minutes, int seconds)
@@ -112,27 +103,27 @@ void printSetpoints(int minutes, int seconds)
     lcd.print(buffer);
 }
 
-void printTimesWithoutTenths(Player black, Player white)
+void printTimesWithoutTenths(long blackTicks, long whiteTicks)
 {
     snprintf(&buffer[0], 17, "%d:%02d           ",
-        black.getMinutes(),
-        black.getSeconds());
+             (int)(blackTicks / 600),
+             (int)(blackTicks / 10 % 60));
 
     snprintf(&buffer[10], 7, "%3d:%02d",
-        white.getMinutes(),
-        white.getSeconds());
+             (int)(whiteTicks / 600),
+             (int)(whiteTicks / 10 % 60));
 
     lcd.print(buffer);
 }
 
-/** 
+/**
  * Print minutes only on the second row of the LCD.
  * Time is padded with spaces to 8 characters.
  * ### Examples ###
  * ```
- * 15m         
- * 5m         
- * 90m         
+ * 15m
+ * 5m
+ * 90m
  * ```
  */
 void printMinutesOnly(int minutes)
@@ -141,68 +132,73 @@ void printMinutesOnly(int minutes)
     lcd.print(buffer);
 }
 
-/** 
+/**
  * Print times for black and white players on the second row of the LCD.
  * Time is in the format mm:ss.t
- * 
+ *
  * Todo: Handle times greater than 99 minutes.
- * 
+ *
  * ### Examples
  * ```
  * 15:30.0  15:30.0
  * 00:03.4  04:59.9
  * ```
  */
-void printTimes(Player black, Player white)
+void printTimes(long blackTicks, long whiteTicks)
 {
-    if(black.getMinutes() > 99 || white.getMinutes() > 99)
+
+    if (blackTicks / 600 > 99 || whiteTicks / 600 > 99)
     {
-        printTimesWithoutTenths(black, white);
+        printTimesWithoutTenths(blackTicks, whiteTicks);
         return;
     }
 
     lcd.setCursor(0, 1);
     snprintf(&buffer[0], 8, "%d:%02d.%d   ",
-        black.getMinutes(),
-        black.getSeconds(),
-        black.getTenths());
+             (int)(blackTicks / 600),
+             (int)(blackTicks / 10 % 60),
+             (int)(blackTicks % 10));
     lcd.print(buffer);
 
-    lcd.write(byte(black.getDelayBar()));
-    lcd.write(byte(white.getDelayBar()));
-    
+    // lcd.write(byte(black.getDelayBar()));
+    // lcd.write(byte(white.getDelayBar()));
+
     lcd.setCursor(9, 1);
     snprintf(&buffer[0], 8, "%2d:%02d.%d",
-        white.getMinutes(),
-        white.getSeconds(),
-        white.getTenths());
+             (int)(whiteTicks / 600),
+             (int)(whiteTicks / 10 % 60),
+             (int)(whiteTicks % 10));
     lcd.print(buffer);
 }
 
-const char* getHeader(ClockState state, bool isBlack)
+const char* getHeader(MenuItem menuItem)
 {
-    switch (state)
+    switch (menuItem)
     {
-        case ClockState::Welcome:       return WELCOME1;
-        case ClockState::ModeSet:       return SELECT_MODE;
-        case ClockState::MinuteSet:     return SET_MINUTES;
-        case ClockState::SecondSet:     return SET_SECONDS;
-        case ClockState::Ready:         return READY_TO_START;
-        case ClockState::Play:          return isBlack ? BLACK_TO_PLAY : WHITE_TO_PLAY;
-        case ClockState::Pause:         return isBlack ? BLACK_TO_PLAY : WHITE_TO_PLAY;
-        case ClockState::GameOver:      return isBlack ? WHITE_WINS : BLACK_WINS;
-        default:                        return "";
+    case MenuItem::Mode:
+        return SELECT_MODE;
+    case MenuItem::Minutes:
+        return SET_MINUTES;
+    case MenuItem::Seconds:
+        return SET_SECONDS;
+    default:
+        break;
     }
 }
 
-const char* getTimerModeName(TimerMode mode)
+const char *getTimerModeName(TimerMode mode)
 {
     switch (mode)
     {
-        case TimerMode::SuddenDeath:    return SUDDEN_DEATH;
-        case TimerMode::Hourglass:      return HOURGLASS;
-        case TimerMode::Fischer:        return FISCHER;
-        case TimerMode::SimpleDelay:    return SIMPLE_DELAY;
-        default:                        return UNKNOWN;
+    case TimerMode::SuddenDeath:
+        return SUDDEN_DEATH;
+    case TimerMode::Hourglass:
+        return HOURGLASS;
+    case TimerMode::Fischer:
+        return FISCHER;
+    case TimerMode::SimpleDelay:
+        return SIMPLE_DELAY;
+    default:
+        return UNKNOWN;
     }
 }

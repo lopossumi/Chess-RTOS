@@ -4,7 +4,7 @@
 
 class GameState
 {
-    private:
+    public:
         long blackTicksLeft;
         long whiteTicksLeft;
         int blackDelaySecondsLeft;
@@ -21,26 +21,23 @@ class GameState
         bool isGameOver;
 
         MenuItem menuItem;
+        TimerMode timerMode;
 
         void incrementBlack();
         void incrementWhite();
 
-    public:
         GameState();
-        void initialize(int minutes, int increment);
+        void initialize(TimerMode timerMode, int minutes, int increment);
 
-        int getBlackMinutes();
-        int getBlackSeconds();
-        int getBlackTenths();
-        int getBlackDelayBar();
+        long getBlackTicksLeft();
+        long getWhiteTicksLeft();
 
-        int getWhiteMinutes();
-        int getWhiteSeconds();
-        int getWhiteTenths();
+        int getBlackDelayBar();       
         int getWhiteDelayBar();
 
         bool isBlackOutOfTime();
         bool isWhiteOutOfTime();
+
         bool isBlackInDanger();
         bool isWhiteInDanger();
 
@@ -80,5 +77,13 @@ class GameState
         void openMenu();
         void closeMenu();
 
-        MenuItem getCurrentMenuItem();
+        MenuItem getMenuItem();
+        TimerMode getTimerMode();
+
+        int getPlayTimeMinutes();
+        int getIncrementSeconds();
+
+        void setTimerMode();
+        void nextTimerMode();
+        void previousTimerMode();
 };
