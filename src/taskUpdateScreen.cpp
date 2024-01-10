@@ -30,51 +30,55 @@ void TaskUpdateScreen(void *pvParameters)
     lcd.setCursor(0, 1);
     lcd.print(WELCOME4);
     vTaskDelay(pdMS_TO_TICKS(1000));
-
-    bool headerUpdated = false;
+    
     for (;;)
     {
-        GameState *gameState = static_cast<GameState *>(pvParameters);
+        Game *game = static_cast<Game *>(pvParameters);
 
-        if (gameState->isBlinking())
+        if (game->isBlinking())
         {
             lcd.noDisplay();
             vTaskDelay(pdMS_TO_TICKS(100));
             lcd.display();
         }
 
-        // Print header
-        lcd.setCursor(0, 0);
-        if(gameState->isMenuOpen)
+        // Print header only if it has changed to save cycles
+        if (game->updateHeader)
         {
-            lcd.print(getHeader(gameState->menuItem));
+            lcd.setCursor(0, 0);
+            if (game->isMenuOpen)
+            {
+                lcd.print(getHeader(game->menuItem));
+            }
+            else if (!game->isGameStarted)
+            {
+                lcd.print(READY_TO_START);
+            }
+            else if (game->isGameOver)
+            {
+                lcd.print(game->isBlackTurn ? WHITE_WINS : BLACK_WINS);
+            }
+            else
+            {
+                lcd.print(game->isBlackTurn ? BLACK_TO_PLAY : WHITE_TO_PLAY);
+            }
+
+            game->updateHeader = false;
         }
-        else if(!gameState->isGameStarted)
-        {
-            lcd.print(READY_TO_START);
-        }
-        else if(gameState->isGameOver)
-        {
-            lcd.print(gameState->isBlackOutOfTime() ? WHITE_WINS : BLACK_WINS);
-        }
-        else
-        {
-            lcd.print(gameState->isBlackTurn ? BLACK_TO_PLAY : WHITE_TO_PLAY);
-        }
-        
+
         lcd.setCursor(0, 1);
-        if (gameState->isMenuOpen)
+        if (game->isMenuOpen)
         {
-            switch (gameState->menuItem)
+            switch (game->menuItem)
             {
             case MenuItem::Mode:
-                lcd.print(getTimerModeName(gameState->timerMode));
+                lcd.print(getTimerModeName(game->timerMode));
                 break;
             case MenuItem::Minutes:
-                printMinutesOnly(gameState->playtimeMinutes);
+                printMinutesOnly(game->playtimeMinutes);
                 break;
             case MenuItem::Increment:
-                printSetpoints(gameState->playtimeMinutes, gameState->incrementSeconds);
+                printSetpoints(game->playtimeMinutes, game->incrementSeconds);
                 break;
             default:
                 break;
@@ -82,7 +86,7 @@ void TaskUpdateScreen(void *pvParameters)
         }
         else
         {
-            printTimes(gameState->blackTicksLeft, gameState->whiteTicksLeft, gameState->getBlackDelayBar(), gameState->getWhiteDelayBar());
+            printTimes(game->blackTicksLeft, game->whiteTicksLeft, game->getBlackDelayBar(), game->getWhiteDelayBar());
         }
         vTaskDelay(pdMS_TO_TICKS(100));
     }
@@ -196,7 +200,7 @@ const char* getHeader(MenuItem menuItem)
     case MenuItem::Increment:
         return SET_SECONDS;
     default:
-        break;
+        return UNKNOWN;
     }
 }
 

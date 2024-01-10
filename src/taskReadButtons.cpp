@@ -31,7 +31,7 @@ void TaskReadButtons(void *pvParameters)
         {
             button = Button::Select;
         }
-        GameState *gameState = static_cast<GameState *>(pvParameters);
+        Game *gameState = static_cast<Game *>(pvParameters);
         gameState->buttonPressed(button);
     }
 }

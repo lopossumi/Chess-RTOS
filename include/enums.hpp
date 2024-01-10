@@ -24,16 +24,3 @@ enum class MenuItem
     Increment,
     MenuItem_MAX
 };
-
-enum class ClockState
-{
-    Welcome,
-    ModeSet,
-    MinuteSet,
-    SecondSet,
-    Ready,
-    Play,
-    Pause,
-    GameOver,
-    ClockState_MAX
-};

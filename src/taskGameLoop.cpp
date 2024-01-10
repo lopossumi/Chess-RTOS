@@ -11,7 +11,7 @@ void TaskGameLoop(void *pvParameters)
         xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(100));
         xLastWakeTime = xTaskGetTickCount();
 
-        GameState *gameState = static_cast<GameState *>(pvParameters);
+        Game *gameState = static_cast<Game *>(pvParameters);
         if (gameState->isGameStarted && !gameState->isPaused && !gameState->isGameOver)
         {
             gameState->update();

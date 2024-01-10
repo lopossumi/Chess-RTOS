@@ -15,7 +15,7 @@ void TaskUpdateScreen(void *pvParameters);
 void TaskReadButton(void *pvParameters);
 void TaskGameLoop(void *pvParameters);
 
-GameState gameState = GameState();
+Game gameState = Game();
 
 void setup()
 {
@@ -24,8 +24,6 @@ void setup()
     int incrementSeconds = EEPROM.read(2);
 
     gameState.initialize(timerMode, playtimeMinutes, incrementSeconds);
-    gameState.isMenuOpen = true;
-    gameState.menuItem = MenuItem::Mode;
     
     // FreeRTOS  Function Name      Task Name       Stack   Params  Prio  Handle
     xTaskCreate( TaskUpdateScreen,  "UpdateScreen", 128,    (void*)&gameState,   2,    NULL );

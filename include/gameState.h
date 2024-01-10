@@ -2,95 +2,63 @@
 
 #include "enums.hpp"
 
-class GameState
+class Game
 {
     public:
-        long blackTicksLeft;
-        long whiteTicksLeft;
-        int blackDelayTicks;
-        int whiteDelayTicks;
-
+        TimerMode timerMode;
+        MenuItem menuItem;
         int playtimeMinutes;
         int incrementSeconds;
 
         bool isMenuOpen;
         bool isBlackTurn;
-
         bool isGameStarted;
         bool isPaused;
         bool isGameOver;
+        bool updateHeader;
 
-        MenuItem menuItem;
-        TimerMode timerMode;
+        long blackTicksLeft;
+        long whiteTicksLeft;
+        int blackDelayTicks;
+        int whiteDelayTicks;
 
+        Game();
+        void initialize(TimerMode timerMode, int minutes, int increment);
+        void buttonPressed(Button button);
         void incrementBlack();
         void incrementWhite();
-
-        GameState();
-        void initialize(TimerMode timerMode, int minutes, int increment);
-
-        long getBlackTicksLeft();
-        long getWhiteTicksLeft();
-
-        int getBlackDelayBar();       
+        void update();
+        bool isBlinking();
+        int getBlackDelayBar();
         int getWhiteDelayBar();
 
-        bool isBlackOutOfTime();
-        bool isWhiteOutOfTime();
+    private:
+        void selectNextMenuOption();
+        void selectPreviousMenuOption();
+        void commitMenuOption();
+        void nextTimerMode();
+        void previousTimerMode();
+        void increaseMinutes();
+        void decreaseMinutes();
+        void increaseIncrement();
+        void decreaseIncrement();
 
+        void delayOrDecrementCurrentPlayer();
+        void delayOrDecrementBlack();
+        void delayOrDecrementWhite();
+
+        void incrementCurrentPlayer();
+        void incrementBlackOneTick();
+        void incrementWhiteOneTick();
+        void incrementOtherOneTick();
+        
         bool isBlackInDanger();
         bool isWhiteInDanger();
 
         bool isBlackTurnNow();
         bool isWhiteTurnNow();
 
-        void startGame();
-        void pauseGame();
-        void resumeGame();
-        void endGame();
-
-        void decrementBlack();
-        void decrementWhite();
-        void decrementCurrentPlayer();
-
-        void incrementCurrentPlayer();
-
-        void incrementBlackOneTick();
-        void incrementWhiteOneTick();
-        void incrementOtherOneTick();
-
-        void delayOrDecrementBlack();
-        void delayOrDecrementWhite();
-        void update();
-
         void resetBlackDelay();
         void resetWhiteDelay();
         void resetCurrentPlayerDelay();
-
-        bool isPausedNow();
-        
-        bool isMenuOpenNow();
-        void openMenu();
-        void closeMenu();
-
-        MenuItem getMenuItem();
-        TimerMode getTimerMode();
-
-        int getPlayTimeMinutes();
-        int getIncrementSeconds();
-
-        void setTimerMode();
-        void nextTimerMode();
-        void previousTimerMode();
-
-        bool isBlinking();
-        void buttonPressed(Button button);
-        void decreaseMinutes();
-        void increaseMinutes();
-        void decreaseIncrement();
-        void increaseIncrement();
-
-        void selectNextMenuOption();
-        void selectPreviousMenuOption();
-        void commitMenuOption();
 };
