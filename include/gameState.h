@@ -67,10 +67,6 @@ class GameState
         void resetWhiteDelay();
         void resetCurrentPlayerDelay();
 
-        void setCurrentPlayerToBlack();
-        void setCurrentPlayerToWhite();
-        void toggleCurrentPlayer();
-
         bool isPausedNow();
         
         bool isMenuOpenNow();
