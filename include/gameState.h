@@ -7,8 +7,8 @@ class GameState
     public:
         long blackTicksLeft;
         long whiteTicksLeft;
-        int blackDelaySecondsLeft;
-        int whiteDelaySecondsLeft;
+        int blackDelayTicks;
+        int whiteDelayTicks;
 
         int playtimeMinutes;
         int incrementSeconds;
@@ -61,7 +61,7 @@ class GameState
 
         void delayOrDecrementBlack();
         void delayOrDecrementWhite();
-        void delayOrDecrementCurrentPlayer();
+        void update();
 
         void resetBlackDelay();
         void resetWhiteDelay();

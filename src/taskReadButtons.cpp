@@ -1,22 +1,12 @@
 #include <Arduino_FreeRTOS.h>
 #include <Arduino.h>
 #include "gameState.h"
-
-#define BUTTON_WHITE 2
-#define BUTTON_BLACK 6
-#define WHITE_LED_GREEN 3
-#define WHITE_LED_RED 4
-
-#define LED_ON LOW
-#define LED_OFF HIGH
+#include "pinout.h"
 
 void TaskReadButtons(void *pvParameters)
 {
     pinMode(BUTTON_WHITE, INPUT);
     pinMode(BUTTON_BLACK, INPUT);
-    pinMode(WHITE_LED_RED, OUTPUT);
-    pinMode(WHITE_LED_GREEN, OUTPUT);    
-
     for(;;)
     {
         vTaskDelay(pdMS_TO_TICKS(200));

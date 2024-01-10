@@ -1,5 +1,4 @@
 #include "gameState.h"
-#include "player.hpp"
 #include "enums.hpp"
 
 GameState::GameState() { }
@@ -16,18 +15,13 @@ void GameState::initialize(TimerMode timerMode, int minutes, int increment)
     isGameStarted = false;
     isPaused = false;
     isGameOver = false;
-    
-    blackTicksLeft = minutes * 600l;
-    whiteTicksLeft = minutes * 600l;
-    blackDelaySecondsLeft = increment * 10;
-    whiteDelaySecondsLeft = increment * 10;
 }
 
 long GameState::getBlackTicksLeft() { return blackTicksLeft; }
 long GameState::getWhiteTicksLeft() { return whiteTicksLeft; }
 
-int GameState::getBlackDelayBar() { return incrementSeconds == 0 ? 0 : (blackDelaySecondsLeft * 8) / incrementSeconds; }
-int GameState::getWhiteDelayBar() { return incrementSeconds == 0 ? 0 : (whiteDelaySecondsLeft * 8) / incrementSeconds; }
+int GameState::getBlackDelayBar() { return incrementSeconds == 0 ? 0 : (blackDelayTicks * 8) / incrementSeconds; }
+int GameState::getWhiteDelayBar() { return incrementSeconds == 0 ? 0 : (whiteDelayTicks * 8) / incrementSeconds; }
 
 bool GameState::isBlackOutOfTime() { return blackTicksLeft == 0; }
 bool GameState::isWhiteOutOfTime() { return whiteTicksLeft == 0; }
@@ -38,7 +32,17 @@ bool GameState::isWhiteInDanger() { return whiteTicksLeft <= 100; }
 bool GameState::isBlackTurnNow() { return isBlackTurn; }
 bool GameState::isWhiteTurnNow() { return !isBlackTurn; }
 
-void GameState::decrementBlack() { blackTicksLeft--; }
+void GameState::decrementBlack() 
+{ 
+    if (blackTicksLeft > 0)
+    {
+        blackTicksLeft--; 
+    }
+    else
+    {
+        isGameOver = true;
+    }
+}
 void GameState::decrementWhite() { whiteTicksLeft--; }
 void GameState::decrementCurrentPlayer() { isBlackTurn ? decrementBlack() : decrementWhite(); }
 
@@ -52,9 +56,9 @@ void GameState::incrementCurrentPlayer() { isBlackTurn ? incrementBlack() : incr
 
 void GameState::delayOrDecrementBlack()
 {
-    if (blackDelaySecondsLeft > 0)
+    if (blackDelayTicks > 0)
     {
-        blackDelaySecondsLeft--;
+        blackDelayTicks--;
     }
     else
     {
@@ -64,9 +68,9 @@ void GameState::delayOrDecrementBlack()
 
 void GameState::delayOrDecrementWhite()
 {
-    if (whiteDelaySecondsLeft > 0)
+    if (whiteDelayTicks > 0)
     {
-        whiteDelaySecondsLeft--;
+        whiteDelayTicks--;
     }
     else
     {
@@ -74,10 +78,19 @@ void GameState::delayOrDecrementWhite()
     }
 }
 
-void GameState::delayOrDecrementCurrentPlayer() { isBlackTurn ? delayOrDecrementBlack() : delayOrDecrementWhite(); }
+void GameState::update() 
+{ 
+    isBlackTurn 
+        ? delayOrDecrementBlack() 
+        : delayOrDecrementWhite();
 
-void GameState::resetBlackDelay() { blackDelaySecondsLeft = incrementSeconds; }
-void GameState::resetWhiteDelay() { whiteDelaySecondsLeft = incrementSeconds; }
+    if(timerMode == TimerMode::Hourglass) { incrementOtherOneTick(); }
+
+    if(isBlackOutOfTime() || isWhiteOutOfTime()) { isGameOver = true; }
+}
+
+void GameState::resetBlackDelay() { blackDelayTicks = incrementSeconds; }
+void GameState::resetWhiteDelay() { whiteDelayTicks = incrementSeconds; }
 void GameState::resetCurrentPlayerDelay() { isBlackTurn ? resetBlackDelay() : resetWhiteDelay(); }
 
 void GameState::previousTimerMode()
@@ -92,7 +105,7 @@ void GameState::nextTimerMode()
 
 bool GameState::isBlinking()
 {
-    return isPaused || isBlackInDanger() || isWhiteInDanger();
+    return isGameStarted && (isPaused || (!isGameOver && (isBlackInDanger() || isWhiteInDanger())));
 }
 
 void GameState::decreaseMinutes()
@@ -140,7 +153,7 @@ void GameState::selectNextMenuOption()
     {
         case MenuItem::Mode:        nextTimerMode();        break;
         case MenuItem::Minutes:     increaseMinutes();      break;
-        case MenuItem::Increment:     increaseIncrement();    break;
+        case MenuItem::Increment:   increaseIncrement();    break;
         default:
             break;
     }
@@ -152,7 +165,7 @@ void GameState::selectPreviousMenuOption()
     {
         case MenuItem::Mode:        previousTimerMode();    break;
         case MenuItem::Minutes:     decreaseMinutes();      break;
-        case MenuItem::Increment:     decreaseIncrement();    break;
+        case MenuItem::Increment:   decreaseIncrement();    break;
         default:
             break;
     }
@@ -173,6 +186,11 @@ void GameState::commitMenuOption()
     case MenuItem::Increment:
         menuItem = MenuItem::Mode;
         isMenuOpen = false;
+
+        blackTicksLeft = playtimeMinutes * 600l;
+        whiteTicksLeft = playtimeMinutes * 600l;
+        blackDelayTicks = incrementSeconds;
+        whiteDelayTicks = incrementSeconds;
         break;
 
     default:
@@ -199,13 +217,9 @@ void GameState::buttonPressed(Button button)
         switch (button)
         {
             case Button::White:
-                isBlackTurn = true;
-                isGameStarted = true;
-                break;
-
             case Button::Black:
-                isBlackTurn = false;
                 isGameStarted = true;
+                isBlackTurn = button == Button::White;
                 break;
 
             default:

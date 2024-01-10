@@ -8,9 +8,9 @@
 #include "textResources.hpp"
 #include "barDisplay.hpp"
 #include "enums.hpp"
-#include "Player.hpp"
+#include "pinout.h"
 
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+LiquidCrystal_I2C lcd(LCD_ADDRESS, LCD_COLUMNS, LCD_ROWS);
 char buffer[17] = "";
 
 void TaskUpdateScreen(void *pvParameters)
@@ -45,8 +45,23 @@ void TaskUpdateScreen(void *pvParameters)
 
         // Print header
         lcd.setCursor(0, 0);
-        lcd.print(getHeader(gameState->menuItem));
-
+        if(gameState->isMenuOpen)
+        {
+            lcd.print(getHeader(gameState->menuItem));
+        }
+        else if(!gameState->isGameStarted)
+        {
+            lcd.print(READY_TO_START);
+        }
+        else if(gameState->isGameOver)
+        {
+            lcd.print(gameState->isBlackOutOfTime() ? WHITE_WINS : BLACK_WINS);
+        }
+        else
+        {
+            lcd.print(gameState->isBlackTurn ? BLACK_TO_PLAY : WHITE_TO_PLAY);
+        }
+        
         lcd.setCursor(0, 1);
         if (gameState->isMenuOpen)
         {
@@ -67,7 +82,7 @@ void TaskUpdateScreen(void *pvParameters)
         }
         else
         {
-            printTimes(gameState->blackTicksLeft, gameState->whiteTicksLeft);
+            printTimes(gameState->blackTicksLeft, gameState->whiteTicksLeft, gameState->getBlackDelayBar(), gameState->getWhiteDelayBar());
         }
         vTaskDelay(pdMS_TO_TICKS(100));
     }
@@ -143,7 +158,7 @@ void printMinutesOnly(int minutes)
  * 00:03.4  04:59.9
  * ```
  */
-void printTimes(long blackTicks, long whiteTicks)
+void printTimes(long blackTicks, long whiteTicks, int blackDelay, int whiteDelay)
 {
 
     if (blackTicks / 600 > 99 || whiteTicks / 600 > 99)
@@ -159,8 +174,8 @@ void printTimes(long blackTicks, long whiteTicks)
              (int)(blackTicks % 10));
     lcd.print(buffer);
 
-    // lcd.write(byte(black.getDelayBar()));
-    // lcd.write(byte(white.getDelayBar()));
+    lcd.write(byte(blackDelay));
+    lcd.write(byte(whiteDelay));
 
     lcd.setCursor(9, 1);
     snprintf(&buffer[0], 8, "%2d:%02d.%d",
