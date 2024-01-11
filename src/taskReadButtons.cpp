@@ -28,14 +28,11 @@ void TaskReadButtons(void *pvParameters)
             continue;
         }
 
-        auto button = whiteButtonPressed
-            ? Button::White
-            : blacButtonPressed
-            ? Button::Black
-            : Button::Select;
-        if(whiteButtonPressed && blackButtonPressed)
+        auto button = whiteButtonPressed ? Button::White
+                    : blackButtonPressed ? Button::Black
+                    : Button::Select;
             
-        Game *gameState = static_cast<Game *>(pvParameters);
+        auto *gameState = static_cast<Game *>(pvParameters);
         gameState->buttonPressed(button);
 
         // TODO: Replace with led task
