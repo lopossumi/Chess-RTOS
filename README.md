@@ -3,9 +3,11 @@
 > 
 > *-- Me, first days of 2024*
 
-This project is a chess clock running on Arduino Uno. It's built on top of FreeRTOS (real-time operating system) and requires a 16x2 liquid crystal display.
+This project is an over-engineered chess clock running on Arduino Uno. It's built on top of FreeRTOS (real-time operating system) and requires a 16x2 liquid crystal display.
 
 It is by no means a tournament-worthy timepiece, but works nonetheless.
+
+** (in progress as of 2024-01-11) **
 
 ## Table of contents
 - [Why?](#why)
@@ -24,12 +26,23 @@ It is by no means a tournament-worthy timepiece, but works nonetheless.
 ## Why?
 I wanted a game clock, and had a bunch of Arduinos lying around. It was also a good opportunity to try out embedded development with GitHub copilot.
 
-## Hardware
+## Parts list
 To build this chess clock, you'll need the following hardware components:
-* Arduino Uno
-* 16x2 HD44780 liquid crystal display (LCD) shield with buttons
 
-The program uses 3 hardware buttons: Select, Left (black player) and Right (white player).
+| Component                                      | Quantity |
+| -----------------------------------------------| -------- |
+| Arduino Uno                                    | 1        |
+| 16x2 HD44780 liquid crystal display (LCD)      | 1        |
+| I2C adapter for LCD                            | 1        |
+| Bi-color common anode LED                      | 2        |
+| Arcade microswitch                             | 2        |
+| Pushbutton                                     | 1        |
+| -----------------------------------------------|----------|
+| Optional components                            |          |
+| -----------------------------------------------|----------|
+| Arduino Grove shield                           | 1        |
+| Grove 4 pin cables                             | 7        |
+| Encoder with pushbutton                        | 1        |
 
 ## Usage
 ### Select mode
