@@ -1,6 +1,6 @@
 #include <Arduino_FreeRTOS.h>
 #include <Arduino.h>
-#include "gameState.h"
+#include "game-state.h"
 #include "pinout.h"
 
 void TaskReadButtons(void *pvParameters)

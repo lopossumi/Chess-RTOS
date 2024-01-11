@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Arduino_FreeRTOS.h>
-#include "gameState.h"
+#include "game-state.h"
 
 void TaskGameLoop(void *pvParameters)
 {

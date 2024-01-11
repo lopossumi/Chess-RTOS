@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enums.hpp"
+#include "enums.h"
 
 class Game
 {
@@ -23,7 +23,9 @@ class Game
         int whiteDelayTicks;
 
         Game();
-        void initialize(TimerMode timerMode, int minutes, int increment);
+        Game(TimerMode timerMode, int minutes, int increment);
+        void reset(TimerMode timerMode, int minutes, int increment);
+
         void buttonPressed(Button button);
         void incrementBlack();
         void incrementWhite();
