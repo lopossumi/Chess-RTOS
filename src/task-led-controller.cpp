@@ -3,6 +3,8 @@
 #include "game-state.h"
 #include "pinout.h"
 
+int leds = B1111;
+
 /// @brief Turn on/off the leds 4 at a time.
 /// B0000 = all off,
 /// B1111 = all on,
@@ -13,10 +15,27 @@
 /// @param value 4 bit value.
 void turnLeds(uint8_t value)
 {
+    if(leds == value)
+    {
+        return;
+    }
+
     digitalWrite(WHITE_LED_GREEN, (value & B1000) ? LED_ON : LED_OFF);
     digitalWrite(BLACK_LED_GREEN, (value & B0100) ? LED_ON : LED_OFF);
     digitalWrite(WHITE_LED_RED, (value & B0010) ? LED_ON : LED_OFF);
     digitalWrite(BLACK_LED_RED, (value & B0001) ? LED_ON : LED_OFF);
+    
+    if(value != B0000)
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            analogWrite(BUZZER, 255);
+            vPortDelay((uint32_t)1);
+            analogWrite(BUZZER, 0);
+            vPortDelay((uint32_t)1);
+        }
+    }
+    leds = value;
 }
 
 void TaskLedController(void *pvParameters)
@@ -27,7 +46,6 @@ void TaskLedController(void *pvParameters)
     pinMode(BLACK_LED_GREEN, OUTPUT);
     
     turnLeds(B0000);
-
     for(;;)
     {
         auto *gameState = static_cast<Game *>(pvParameters);

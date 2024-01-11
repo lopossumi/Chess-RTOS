@@ -33,17 +33,6 @@ void TaskReadButtons(void *pvParameters)
         auto *gameState = static_cast<Game *>(pvParameters);
         bool playSound = gameState->buttonPressed(button);
 
-        if(playSound)
-        {
-            for (int i = 0; i < 10; i++)
-            {
-                analogWrite(BUZZER, 255);
-                vPortDelay((uint32_t)1);
-                analogWrite(BUZZER, 0);
-                vPortDelay((uint32_t)1);
-            }
-        }
-
         vTaskDelay(pdMS_TO_TICKS(300));
     }
 }
