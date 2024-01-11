@@ -3,7 +3,6 @@
 #include "game-state.h"
 #include "pinout.h"
 
-
 void TaskGameLoop(void *pvParameters)
 {
     TickType_t xLastWakeTime = xTaskGetTickCount();

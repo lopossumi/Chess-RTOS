@@ -39,6 +39,7 @@ class Game
         void selectNextMenuOption();
         void selectPreviousMenuOption();
         void commitMenuOption();
+        void saveSettings();
         void closeMenu();
         void nextTimerMode();
         void previousTimerMode();
