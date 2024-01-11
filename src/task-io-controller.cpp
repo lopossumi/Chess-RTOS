@@ -5,6 +5,19 @@
 #include "task-io-controller.h"
 int leds = B1111;
 
+#define A4 440
+#define B4 494
+#define C5 523
+#define D5 587
+#define E5 659
+#define F5 698
+#define G5 784
+#define A5 880
+#define B5 988
+#define C6 1047
+#define D6 1175
+#define E6 1319
+
 void TaskIOController(void *pvParameters)
 {
     pinMode(BUTTON_WHITE, INPUT);
@@ -21,6 +34,43 @@ void TaskIOController(void *pvParameters)
     bool selectButtonPressed = false;
 
     turnLeds(B0000);
+
+    tone(BUZZER, G5, 320);
+    vTaskDelay(pdMS_TO_TICKS(320));
+    tone(BUZZER, A5, 320);
+    vTaskDelay(pdMS_TO_TICKS(320));
+    tone(BUZZER, G5, 320);
+    vTaskDelay(pdMS_TO_TICKS(320));
+    tone(BUZZER, C6, 320);
+    vTaskDelay(pdMS_TO_TICKS(320));
+    tone(BUZZER, G5, 320);
+    vTaskDelay(pdMS_TO_TICKS(320));
+    tone(BUZZER, A5, 320);
+    vTaskDelay(pdMS_TO_TICKS(320));
+    tone(BUZZER, G5, 320);
+    vTaskDelay(pdMS_TO_TICKS(320));
+    vTaskDelay(pdMS_TO_TICKS(320));
+    tone(BUZZER, A5, 320);
+    vTaskDelay(pdMS_TO_TICKS(320));
+    tone(BUZZER, A5, 320);
+    vTaskDelay(pdMS_TO_TICKS(320));
+    tone(BUZZER, G5, 320);
+    vTaskDelay(pdMS_TO_TICKS(320));
+    tone(BUZZER, A5, 320);
+    vTaskDelay(pdMS_TO_TICKS(320));
+    tone(BUZZER, G5, 160);
+    vTaskDelay(pdMS_TO_TICKS(160));
+    tone(BUZZER, F5, 160);
+    vTaskDelay(pdMS_TO_TICKS(160));
+    tone(BUZZER, E5, 160);
+    vTaskDelay(pdMS_TO_TICKS(160));
+    tone(BUZZER, D5, 160);
+    vTaskDelay(pdMS_TO_TICKS(160));
+    tone(BUZZER, E5, 320);
+    vTaskDelay(pdMS_TO_TICKS(320));
+    tone(BUZZER, C5, 320);
+    vTaskDelay(pdMS_TO_TICKS(320));
+
     for(;;)
     {
         turnLeds(leds);
@@ -38,16 +88,9 @@ void TaskIOController(void *pvParameters)
 
         bool isBlackTurn = gameState->isBlackTurn;
         
-        if(gameState->isGameOver) { turnLeds(isBlackTurn ? B1001 : B0110); }
-        else if(gameState->isGameStarted) {
-            if(gameState->isBlinking())
-            {
-                turnLeds(B0000);
-                vTaskDelay(pdMS_TO_TICKS(200));
-            }
-            turnLeds(isBlackTurn ? B0100 : B1000);
-        }
-        else if(!gameState->isMenuOpen) { turnLeds(B1100); }
+        if(gameState->isGameOver)           { turnLeds(isBlackTurn ? B1001 : B0110); }
+        else if(gameState->isGameStarted)   { turnLeds(isBlackTurn ? B0100 : B1000); }
+        else if(!gameState->isMenuOpen)     { turnLeds(B1100); }
 
         if(playSound)
         {
@@ -57,8 +100,6 @@ void TaskIOController(void *pvParameters)
         vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
-
-
 
 /// @brief Turn on/off the leds 4 at a time.
 /// B0000 = all off,
