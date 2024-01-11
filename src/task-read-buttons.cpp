@@ -22,7 +22,7 @@ void TaskReadButtons(void *pvParameters)
             whiteButtonPressed = digitalRead(BUTTON_WHITE);
             blackButtonPressed = digitalRead(BUTTON_BLACK);
             selectButtonPressed = digitalRead(BUTTON_SELECT);
-            vTaskDelay(pdMS_TO_TICKS(10));
+            vTaskDelay(pdMS_TO_TICKS(20));
             continue;
         }
 
@@ -31,8 +31,19 @@ void TaskReadButtons(void *pvParameters)
                     : Button::Select;
             
         auto *gameState = static_cast<Game *>(pvParameters);
-        gameState->buttonPressed(button);
+        bool playSound = gameState->buttonPressed(button);
 
-        vTaskDelay(pdMS_TO_TICKS(200));
+        if(playSound)
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                analogWrite(BUZZER, 255);
+                vPortDelay((uint32_t)1);
+                analogWrite(BUZZER, 0);
+                vPortDelay((uint32_t)1);
+            }
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(300));
     }
 }

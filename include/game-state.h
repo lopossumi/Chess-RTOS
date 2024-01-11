@@ -26,7 +26,7 @@ class Game
         Game(TimerMode timerMode, int minutes, int increment);
         void reset(TimerMode timerMode, int minutes, int increment);
 
-        void buttonPressed(Button button);
+        bool buttonPressed(Button button);
         void endBlackTurn();
         void endWhiteTurn();
         void update();

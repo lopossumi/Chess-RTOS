@@ -9,6 +9,8 @@
 #define BLACK_LED_GREEN 8
 #define BLACK_LED_RED 7
 
+#define BUZZER 10
+
 #define LED_ON LOW
 #define LED_OFF HIGH
 

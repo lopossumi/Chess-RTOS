@@ -27,6 +27,7 @@ void TaskLedController(void *pvParameters)
     pinMode(BLACK_LED_GREEN, OUTPUT);
     
     turnLeds(B0000);
+
     for(;;)
     {
         auto *gameState = static_cast<Game *>(pvParameters);

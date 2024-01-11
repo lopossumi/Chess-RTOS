@@ -1,5 +1,8 @@
+#include <Arduino.h>
+
 #include "game-state.h"
 #include "enums.h"
+#include "pinout.h"
 
 Game::Game(TimerMode timerMode, int minutes, int increment)
 {
@@ -225,8 +228,9 @@ void Game::closeMenu()
     whiteDelayTicks = timerMode == TimerMode::SimpleDelay ? incrementSeconds * 10 : 0;
 }
 
-void Game::buttonPressed(Button button)
+bool Game::buttonPressed(Button button)
 {
+    bool playSound = true;
     if(isMenuOpen){
         switch (button)
         {
@@ -237,7 +241,6 @@ void Game::buttonPressed(Button button)
             default:
                 break;    
         }
-        return;
     }
     else if(!isGameStarted){
         switch (button)
@@ -284,12 +287,20 @@ void Game::buttonPressed(Button button)
             {
                 endWhiteTurn();
             }
+            else
+            {
+                playSound = false;
+            }
             break;
 
         case Button::Black:
             if (isBlackTurn)
             {
                 endBlackTurn();
+            }
+            else
+            {
+                playSound = false;
             }
             break;
 
@@ -302,4 +313,5 @@ void Game::buttonPressed(Button button)
         }
     }
     updateHeader = true;
+    return playSound;
 }
