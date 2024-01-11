@@ -22,12 +22,12 @@ void Game::reset(TimerMode timerMode, int minutes, int increment)
 
     blackTicksLeft = playtimeMinutes * 600l;
     whiteTicksLeft = playtimeMinutes * 600l;
-    blackDelayTicks = incrementSeconds;
-    whiteDelayTicks = incrementSeconds;
+    blackDelayTicks = incrementSeconds * 10;
+    whiteDelayTicks = incrementSeconds * 10;
 }
 
-int Game::getBlackDelayBar() { return incrementSeconds == 0 ? 0 : (blackDelayTicks * 8) / incrementSeconds; }
-int Game::getWhiteDelayBar() { return incrementSeconds == 0 ? 0 : (whiteDelayTicks * 8) / incrementSeconds; }
+int Game::getBlackDelayBar() { return timerMode == TimerMode::SimpleDelay ? (blackDelayTicks * 8) / (incrementSeconds * 10) : 0; }
+int Game::getWhiteDelayBar() { return timerMode == TimerMode::SimpleDelay ? (whiteDelayTicks * 8) / (incrementSeconds * 10) : 0; }
 
 bool Game::isBlackInDanger() { return blackTicksLeft <= 100; }
 bool Game::isWhiteInDanger() { return whiteTicksLeft <= 100; }
@@ -36,9 +36,33 @@ void Game::incrementBlackOneTick() { blackTicksLeft++; }
 void Game::incrementWhiteOneTick() { whiteTicksLeft++; }
 void Game::incrementOtherOneTick() { isBlackTurn ? incrementWhiteOneTick() : incrementBlackOneTick(); }
 
-void Game::incrementBlack() { blackTicksLeft += incrementSeconds * 10; }
-void Game::incrementWhite() { whiteTicksLeft += incrementSeconds * 10; }
-void Game::incrementCurrentPlayer() { isBlackTurn ? incrementBlack() : incrementWhite(); }
+void Game::endBlackTurn() 
+{
+    if(timerMode == TimerMode::Fischer)
+    {
+        blackTicksLeft += incrementSeconds * 10;
+    }
+    if(timerMode == TimerMode::SimpleDelay)
+    {
+        resetBlackDelay();
+    }
+    isBlackTurn = false;
+}
+
+void Game::endWhiteTurn() 
+{ 
+    if(timerMode == TimerMode::Fischer)
+    {
+        whiteTicksLeft += incrementSeconds * 10;
+    }
+    if(timerMode == TimerMode::SimpleDelay)
+    {
+        resetWhiteDelay();
+    }
+    isBlackTurn = true;
+}
+
+void Game::incrementCurrentPlayer() { isBlackTurn ? endBlackTurn() : endWhiteTurn(); }
 
 void Game::delayOrDecrementCurrentPlayer()
 {
@@ -171,22 +195,34 @@ void Game::commitMenuOption()
         break;
 
     case MenuItem::Minutes:
-        menuItem = MenuItem::Increment;
+        if(timerMode == TimerMode::Fischer || timerMode == TimerMode::SimpleDelay)
+        {
+            menuItem = MenuItem::Increment;
+        }
+        else
+        {
+            incrementSeconds = 0;
+            closeMenu();
+        }
         break;
 
     case MenuItem::Increment:
-        menuItem = MenuItem::Mode;
-        isMenuOpen = false;
-
-        blackTicksLeft = playtimeMinutes * 600l;
-        whiteTicksLeft = playtimeMinutes * 600l;
-        blackDelayTicks = incrementSeconds;
-        whiteDelayTicks = incrementSeconds;
+        closeMenu();
         break;
 
     default:
         break;
     }
+}
+
+void Game::closeMenu()
+{
+    menuItem = MenuItem::Mode;
+    isMenuOpen = false;
+    blackTicksLeft = playtimeMinutes * 600l;
+    whiteTicksLeft = playtimeMinutes * 600l;
+    blackDelayTicks = timerMode == TimerMode::SimpleDelay ? incrementSeconds * 10 : 0;
+    whiteDelayTicks = timerMode == TimerMode::SimpleDelay ? incrementSeconds * 10 : 0;
 }
 
 void Game::buttonPressed(Button button)
@@ -246,16 +282,14 @@ void Game::buttonPressed(Button button)
         case Button::White:
             if (!isBlackTurn)
             {
-                incrementWhite();
-                isBlackTurn = true;
+                endWhiteTurn();
             }
             break;
 
         case Button::Black:
             if (isBlackTurn)
             {
-                incrementBlack();
-                isBlackTurn = false;
+                endBlackTurn();
             }
             break;
 

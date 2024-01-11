@@ -27,19 +27,19 @@ class Game
         void reset(TimerMode timerMode, int minutes, int increment);
 
         void buttonPressed(Button button);
-        void incrementBlack();
-        void incrementWhite();
+        void endBlackTurn();
+        void endWhiteTurn();
         void update();
         bool isBlinking();
         int getBlackDelayBar();
         int getWhiteDelayBar();
         bool isBlackInDanger();
         bool isWhiteInDanger();
-
     private:
         void selectNextMenuOption();
         void selectPreviousMenuOption();
         void commitMenuOption();
+        void closeMenu();
         void nextTimerMode();
         void previousTimerMode();
         void increaseMinutes();
