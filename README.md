@@ -37,12 +37,11 @@ To build this chess clock, you'll need the following hardware components:
 | Bi-color common anode LED                      | 2        |
 | Arcade microswitch                             | 2        |
 | Pushbutton                                     | 1        |
-| -----------------------------------------------|----------|
-| Optional components                            |          |
-| -----------------------------------------------|----------|
-| Arduino Grove shield                           | 1        |
-| Grove 4 pin cables                             | 7        |
-| Encoder with pushbutton                        | 1        |
+|                                                |          |
+| *Optional components:*                         |          |
+| *Arduino Grove shield*                         | 1        |
+| *Grove 4 pin cables*                           | 7        |
+| *Encoder with pushbutton*                      | 1        |
 
 ## Usage
 ### Select mode
