@@ -4,7 +4,7 @@
 #include <Wire.h>
 
 #include "game-state.h"
-#include "task-lcd-controller.h"
+#include "task-display-controller.h"
 #include "text-resources.h"
 #include "bar-display.h"
 #include "enums.h"
@@ -13,7 +13,7 @@
 LiquidCrystal_I2C lcd(LCD_ADDRESS, LCD_COLUMNS, LCD_ROWS);
 char buffer[17] = "";
 
-void TaskLcdController(void *pvParameters)
+void TaskDisplayController(void *pvParameters)
 {
     lcd.init();
     lcd.backlight();

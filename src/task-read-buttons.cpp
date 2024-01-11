@@ -7,8 +7,6 @@ void TaskReadButtons(void *pvParameters)
 {
     pinMode(BUTTON_WHITE, INPUT);
     pinMode(BUTTON_BLACK, INPUT);
-    pinMode(WHITE_LED_RED, OUTPUT);
-    pinMode(WHITE_LED_GREEN, OUTPUT);
     pinMode(BUTTON_SELECT, OUTPUT);
 
     for(;;)
@@ -34,18 +32,6 @@ void TaskReadButtons(void *pvParameters)
             
         auto *gameState = static_cast<Game *>(pvParameters);
         gameState->buttonPressed(button);
-
-        // TODO: Replace with led task
-        if(gameState->isGameStarted && gameState->isBlackTurn)
-        {
-            digitalWrite(WHITE_LED_RED, LED_ON);
-            digitalWrite(WHITE_LED_GREEN, LED_OFF);
-        }
-        else
-        {
-            digitalWrite(WHITE_LED_RED, LED_OFF);
-            digitalWrite(WHITE_LED_GREEN, LED_ON);
-        }
 
         vTaskDelay(pdMS_TO_TICKS(200));
     }

@@ -8,5 +8,5 @@ void printTimesWithoutTenths(long blackTicks, long whiteTicks);
 void printTimes(long blackTicks, long whiteTicks, int blackDelay, int whiteDelay);
 const char* getHeader(MenuItem menuItem);
 const char* getTimerModeName(TimerMode mode);
-void TaskLcdController(void *pvParameters);
+void TaskDisplayController(void *pvParameters);
 void initializeBarDisplay();

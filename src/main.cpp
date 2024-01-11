@@ -8,9 +8,10 @@
 #include "enums.h"
 #include "game-state.h"
 
-#include "task-lcd-controller.h"
+#include "task-display-controller.h"
 #include "task-read-buttons.h"
 #include "task-game-loop.h"
+#include "task-led-controller.h"
 
 void TaskUpdateScreen(void *pvParameters);
 void TaskReadButton(void *pvParameters);
@@ -24,11 +25,11 @@ Game gameState = Game(
 
 void setup()
 {   
-    // FreeRTOS  Function Name      Task Name           Stack   Params              Prio  Handle
-    xTaskCreate( TaskLcdController, "Lcd controller",   128,    (void*)&gameState,  2,    NULL );
-    xTaskCreate( TaskReadButtons,   "Button Reader",    128,    (void*)&gameState,  1,    NULL );
-    xTaskCreate( TaskGameLoop,      "Game loop",        128,    (void*)&gameState,  3,    NULL );
-
+    // FreeRTOS  Function Name      Task Name               Stack   Params              Prio  Handle
+    xTaskCreate( TaskDisplayController, "Lcd controller",   128,    (void*)&gameState,  2,    NULL );
+    xTaskCreate( TaskReadButtons,   "Button Reader",        60,    (void*)&gameState,  1,    NULL );
+    xTaskCreate( TaskGameLoop,      "Game loop",            60,    (void*)&gameState,  3,    NULL );
+    xTaskCreate( TaskLedController, "Led controller",       60,    (void*)&gameState,   1,    NULL );
     vTaskStartScheduler();
 }
 
