@@ -1,9 +1,12 @@
-#include "gameState.h"
-#include "enums.hpp"
+#include "game-state.h"
+#include "enums.h"
 
-Game::Game() { }
+Game::Game(TimerMode timerMode, int minutes, int increment)
+{
+    reset(timerMode, minutes, increment);
+}
 
-void Game::initialize(TimerMode timerMode, int minutes, int increment)
+void Game::reset(TimerMode timerMode, int minutes, int increment)
 {
     this->timerMode = timerMode;
     playtimeMinutes = minutes;
@@ -16,6 +19,11 @@ void Game::initialize(TimerMode timerMode, int minutes, int increment)
     isPaused = false;
     isGameOver = false;
     updateHeader = true;
+
+    blackTicksLeft = playtimeMinutes * 600l;
+    whiteTicksLeft = playtimeMinutes * 600l;
+    blackDelayTicks = incrementSeconds;
+    whiteDelayTicks = incrementSeconds;
 }
 
 int Game::getBlackDelayBar() { return incrementSeconds == 0 ? 0 : (blackDelayTicks * 8) / incrementSeconds; }
@@ -243,7 +251,7 @@ void Game::buttonPressed(Button button)
         switch (button)
         {
         case Button::Select:
-            initialize(timerMode, playtimeMinutes, incrementSeconds);
+            reset(timerMode, playtimeMinutes, incrementSeconds);
             break;
 
         default:

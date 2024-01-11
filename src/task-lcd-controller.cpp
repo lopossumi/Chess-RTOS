@@ -3,17 +3,17 @@
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
-#include "gameState.h"
-#include "taskUpdateScreen.hpp"
-#include "textResources.hpp"
-#include "barDisplay.hpp"
-#include "enums.hpp"
+#include "game-state.h"
+#include "task-lcd-controller.h"
+#include "text-resources.h"
+#include "bar-display.h"
+#include "enums.h"
 #include "pinout.h"
 
 LiquidCrystal_I2C lcd(LCD_ADDRESS, LCD_COLUMNS, LCD_ROWS);
 char buffer[17] = "";
 
-void TaskUpdateScreen(void *pvParameters)
+void TaskLcdController(void *pvParameters)
 {
     lcd.init();
     lcd.backlight();

@@ -4,31 +4,30 @@
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
-#include "enums.hpp"
-#include "gameState.h"
+#include "pinout.h"
+#include "enums.h"
+#include "game-state.h"
 
-#include "taskUpdateScreen.hpp"
-#include "taskReadButtons.h"
-#include "taskGameLoop.h"
+#include "task-lcd-controller.h"
+#include "task-read-buttons.h"
+#include "task-game-loop.h"
 
 void TaskUpdateScreen(void *pvParameters);
 void TaskReadButton(void *pvParameters);
 void TaskGameLoop(void *pvParameters);
 
-Game gameState = Game();
+Game gameState = Game(
+    (TimerMode)EEPROM.read(EEPROM_TIMER_MODE),
+    (int)EEPROM.read(EEPROM_PLAYTIME_MINUTES),
+    (int)EEPROM.read(EEPROM_INCREMENT_SECONDS)
+    );
 
 void setup()
-{
-    TimerMode timerMode = (TimerMode)EEPROM.read(0);
-    int playtimeMinutes = EEPROM.read(1);
-    int incrementSeconds = EEPROM.read(2);
-
-    gameState.initialize(timerMode, playtimeMinutes, incrementSeconds);
-    
-    // FreeRTOS  Function Name      Task Name       Stack   Params  Prio  Handle
-    xTaskCreate( TaskUpdateScreen,  "UpdateScreen", 128,    (void*)&gameState,   2,    NULL );
-    xTaskCreate( TaskReadButtons,   "ReadButton",   128,    (void*)&gameState,   1,    NULL );
-    xTaskCreate( TaskGameLoop,      "GameLoop",     128,    (void*)&gameState,   3,    NULL );
+{   
+    // FreeRTOS  Function Name      Task Name           Stack   Params              Prio  Handle
+    xTaskCreate( TaskLcdController, "Lcd controller",   128,    (void*)&gameState,  2,    NULL );
+    xTaskCreate( TaskReadButtons,   "Button Reader",    128,    (void*)&gameState,  1,    NULL );
+    xTaskCreate( TaskGameLoop,      "Game loop",        128,    (void*)&gameState,  3,    NULL );
 
     vTaskStartScheduler();
 }
