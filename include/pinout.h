@@ -6,8 +6,8 @@
 
 #define WHITE_LED_GREEN 3
 #define WHITE_LED_RED 4
-#define BLACK_LED_GREEN 7
-#define BLACK_LED_RED 8
+#define BLACK_LED_GREEN 8
+#define BLACK_LED_RED 7
 
 #define LED_ON LOW
 #define LED_OFF HIGH
