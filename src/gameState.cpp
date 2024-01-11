@@ -78,7 +78,7 @@ void Game::delayOrDecrementWhite()
 void Game::update() 
 { 
     delayOrDecrementCurrentPlayer();
-    
+
     if(timerMode == TimerMode::Hourglass) { incrementOtherOneTick(); }
 
     if(blackTicksLeft == 0 || whiteTicksLeft == 0) { isGameOver = true; }
