@@ -32,10 +32,6 @@ int Game::getWhiteDelayBar() { return incrementSeconds == 0 ? 0 : (whiteDelayTic
 bool Game::isBlackInDanger() { return blackTicksLeft <= 100; }
 bool Game::isWhiteInDanger() { return whiteTicksLeft <= 100; }
 
-bool Game::isBlackTurnNow() { return isBlackTurn; }
-bool Game::isWhiteTurnNow() { return !isBlackTurn; }
-
-
 void Game::incrementBlackOneTick() { blackTicksLeft++; }
 void Game::incrementWhiteOneTick() { whiteTicksLeft++; }
 void Game::incrementOtherOneTick() { isBlackTurn ? incrementWhiteOneTick() : incrementBlackOneTick(); }
@@ -59,11 +55,6 @@ void Game::delayOrDecrementBlack()
     {
         blackTicksLeft--; 
     }
-    else
-    {
-        isGameOver = true;
-        updateHeader = true;
-    }
 }
 
 void Game::delayOrDecrementWhite()
@@ -76,20 +67,17 @@ void Game::delayOrDecrementWhite()
     {
         whiteTicksLeft--;
     }
-    else
-    {
-        isGameOver = true;
-        updateHeader = true;
-    }
 }
 
 void Game::update() 
 { 
     delayOrDecrementCurrentPlayer();
-
     if(timerMode == TimerMode::Hourglass) { incrementOtherOneTick(); }
-
-    if(blackTicksLeft == 0 || whiteTicksLeft == 0) { isGameOver = true; }
+    if(blackTicksLeft == 0 || whiteTicksLeft == 0) 
+    { 
+        isGameOver = true; 
+        updateHeader = true;
+    }
 }
 
 void Game::resetBlackDelay() { blackDelayTicks = incrementSeconds; }
@@ -199,7 +187,6 @@ void Game::commitMenuOption()
     default:
         break;
     }
-    updateHeader = true;
 }
 
 void Game::buttonPressed(Button button)
@@ -216,24 +203,20 @@ void Game::buttonPressed(Button button)
         }
         return;
     }
-
-    if(!isGameStarted){
+    else if(!isGameStarted){
         switch (button)
         {
             case Button::White:
             case Button::Black:
                 isGameStarted = true;
                 isBlackTurn = button == Button::White;
-                updateHeader = true;
                 break;
 
             default:
                 break;
         }
-        return;
     }
-
-    if(isPaused){
+    else if(isPaused){
         switch (button)
         {
             case Button::Select:
@@ -243,10 +226,8 @@ void Game::buttonPressed(Button button)
             default:
                 break;
         }
-        return;
     }
-
-    if(isGameOver)
+    else if(isGameOver)
     {
         switch (button)
         {
@@ -257,35 +238,34 @@ void Game::buttonPressed(Button button)
         default:
             break;
         }
-        return;
     }
-
-    // Default: game is running
-    switch (button)
+    else 
     {
-    case Button::White:
-        if (!isBlackTurn)
+        switch (button)
         {
-            incrementWhite();
-            isBlackTurn = true;
-            updateHeader = true;
+        case Button::White:
+            if (!isBlackTurn)
+            {
+                incrementWhite();
+                isBlackTurn = true;
+            }
+            break;
+
+        case Button::Black:
+            if (isBlackTurn)
+            {
+                incrementBlack();
+                isBlackTurn = false;
+            }
+            break;
+
+        case Button::Select:
+            isPaused = true;
+            break;
+
+        default:
+            break;
         }
-        break;
-
-    case Button::Black:
-        if (isBlackTurn)
-        {
-            incrementBlack();
-            isBlackTurn = false;
-            updateHeader = true;
-        }
-        break;
-
-    case Button::Select:
-        isPaused = true;
-        break;
-
-    default:
-        break;
     }
+    updateHeader = true;
 }

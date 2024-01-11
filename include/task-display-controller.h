@@ -10,3 +10,4 @@ const char* getHeader(MenuItem menuItem);
 const char* getTimerModeName(TimerMode mode);
 void TaskDisplayController(void *pvParameters);
 void initializeBarDisplay();
+void getHeaderRow(Game *game, char *buffer);

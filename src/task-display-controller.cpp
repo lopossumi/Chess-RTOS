@@ -11,6 +11,7 @@
 #include "pinout.h"
 
 LiquidCrystal_I2C lcd(LCD_ADDRESS, LCD_COLUMNS, LCD_ROWS);
+char buffer0[17] = "";
 char buffer[17] = "";
 
 void TaskDisplayController(void *pvParameters)
@@ -35,35 +36,11 @@ void TaskDisplayController(void *pvParameters)
     {
         Game *game = static_cast<Game *>(pvParameters);
 
-        if (game->isBlinking())
+        if (game->isPaused)
         {
             lcd.noDisplay();
             vTaskDelay(pdMS_TO_TICKS(100));
             lcd.display();
-        }
-
-        // Print header only if it has changed to save cycles
-        if (game->updateHeader)
-        {
-            lcd.setCursor(0, 0);
-            if (game->isMenuOpen)
-            {
-                lcd.print(getHeader(game->menuItem));
-            }
-            else if (!game->isGameStarted)
-            {
-                lcd.print(READY_TO_START);
-            }
-            else if (game->isGameOver)
-            {
-                lcd.print(game->isBlackTurn ? WHITE_WINS : BLACK_WINS);
-            }
-            else
-            {
-                lcd.print(game->isBlackTurn ? BLACK_TO_PLAY : WHITE_TO_PLAY);
-            }
-
-            game->updateHeader = false;
         }
 
         lcd.setCursor(0, 1);
@@ -88,7 +65,36 @@ void TaskDisplayController(void *pvParameters)
         {
             printTimes(game->blackTicksLeft, game->whiteTicksLeft, game->getBlackDelayBar(), game->getWhiteDelayBar());
         }
+
+        // Print header only if it has changed to save cycles
+        if (game->updateHeader)
+        {
+            lcd.setCursor(0, 0);
+            getHeaderRow(game, buffer0);
+            lcd.print(buffer0);
+            game->updateHeader = false;
+        }
         vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+void getHeaderRow(Game* game, char* buffer)
+{
+    if (game->isMenuOpen)
+    {
+        snprintf(buffer, 17, "%-16s", getHeader(game->menuItem));
+    }
+    else if (!game->isGameStarted)
+    {
+        snprintf(buffer, 17, "%-16s", READY_TO_START);
+    }
+    else if (game->isGameOver)
+    {
+        snprintf(buffer, 17, "%-16s", game->isBlackTurn ? WHITE_WINS : BLACK_WINS);
+    }
+    else
+    {
+        snprintf(buffer, 17, "%-16s", game->isBlackTurn ? BLACK_TO_PLAY : WHITE_TO_PLAY);
     }
 }
 

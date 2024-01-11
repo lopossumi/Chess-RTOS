@@ -33,6 +33,8 @@ class Game
         bool isBlinking();
         int getBlackDelayBar();
         int getWhiteDelayBar();
+        bool isBlackInDanger();
+        bool isWhiteInDanger();
 
     private:
         void selectNextMenuOption();
@@ -54,12 +56,6 @@ class Game
         void incrementWhiteOneTick();
         void incrementOtherOneTick();
         
-        bool isBlackInDanger();
-        bool isWhiteInDanger();
-
-        bool isBlackTurnNow();
-        bool isWhiteTurnNow();
-
         void resetBlackDelay();
         void resetWhiteDelay();
         void resetCurrentPlayerDelay();
