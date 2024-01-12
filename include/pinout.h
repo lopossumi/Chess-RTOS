@@ -1,8 +1,12 @@
 #pragma once
+#include <Arduino.h>
 
 #define BUTTON_WHITE 2
 #define BUTTON_BLACK 6
-#define BUTTON_SELECT 5
+#define ENC_SW 5
+#define ENC_DT A0
+#define ENC_CLK A1
+
 #define WHITE_LED_GREEN 3
 #define WHITE_LED_RED 4
 #define BLACK_LED_GREEN 8

@@ -22,62 +22,59 @@ void TaskIOController(void *pvParameters)
 {
     pinMode(BUTTON_WHITE, INPUT);
     pinMode(BUTTON_BLACK, INPUT);
-    pinMode(BUTTON_SELECT, OUTPUT);
+    pinMode(ENC_SW, OUTPUT);
     pinMode(WHITE_LED_RED, OUTPUT);
     pinMode(WHITE_LED_GREEN, OUTPUT);
     pinMode(BLACK_LED_RED, OUTPUT);
     pinMode(BLACK_LED_GREEN, OUTPUT);
     pinMode(BUZZER, OUTPUT);
+    pinMode(A1, INPUT_PULLUP);
+
+    pinMode(ENC_CLK, INPUT_PULLUP);
+    pinMode(ENC_DT, INPUT_PULLUP);
 
     bool whiteButtonPressed = false;
     bool blackButtonPressed = false;
     bool selectButtonPressed = false;
+    bool dt = false;
+    bool clk = false;
+    uint8_t lastEncoderValue = 0;
 
     turnLeds(B0000);
 
-    tone(BUZZER, G5, 320);
-    vTaskDelay(pdMS_TO_TICKS(320));
-    tone(BUZZER, A5, 320);
-    vTaskDelay(pdMS_TO_TICKS(320));
-    tone(BUZZER, G5, 320);
-    vTaskDelay(pdMS_TO_TICKS(320));
-    tone(BUZZER, C6, 320);
-    vTaskDelay(pdMS_TO_TICKS(320));
-    tone(BUZZER, G5, 320);
-    vTaskDelay(pdMS_TO_TICKS(320));
-    tone(BUZZER, A5, 320);
-    vTaskDelay(pdMS_TO_TICKS(320));
-    tone(BUZZER, G5, 320);
-    vTaskDelay(pdMS_TO_TICKS(320));
-    vTaskDelay(pdMS_TO_TICKS(320));
-    tone(BUZZER, A5, 320);
-    vTaskDelay(pdMS_TO_TICKS(320));
-    tone(BUZZER, A5, 320);
-    vTaskDelay(pdMS_TO_TICKS(320));
-    tone(BUZZER, G5, 320);
-    vTaskDelay(pdMS_TO_TICKS(320));
-    tone(BUZZER, A5, 320);
-    vTaskDelay(pdMS_TO_TICKS(320));
-    tone(BUZZER, G5, 160);
-    vTaskDelay(pdMS_TO_TICKS(160));
-    tone(BUZZER, F5, 160);
-    vTaskDelay(pdMS_TO_TICKS(160));
-    tone(BUZZER, E5, 160);
-    vTaskDelay(pdMS_TO_TICKS(160));
-    tone(BUZZER, D5, 160);
-    vTaskDelay(pdMS_TO_TICKS(160));
-    tone(BUZZER, E5, 320);
-    vTaskDelay(pdMS_TO_TICKS(320));
-    tone(BUZZER, C5, 320);
-    vTaskDelay(pdMS_TO_TICKS(320));
+    tone(BUZZER, C5, 80);
+    vTaskDelay(pdMS_TO_TICKS(80));
+    tone(BUZZER, E5, 80);
+    vTaskDelay(pdMS_TO_TICKS(80));
+    tone(BUZZER, G5, 80);
+    vTaskDelay(pdMS_TO_TICKS(80));
+    tone(BUZZER, B5, 80);
+    vTaskDelay(pdMS_TO_TICKS(80));
+    tone(BUZZER, C6, 80);
+    vTaskDelay(pdMS_TO_TICKS(80));
 
     for(;;)
     {
         turnLeds(leds);
         whiteButtonPressed = digitalRead(BUTTON_WHITE);
         blackButtonPressed = digitalRead(BUTTON_BLACK);
-        selectButtonPressed = digitalRead(BUTTON_SELECT);
-        
+        selectButtonPressed = digitalRead(ENC_SW);
+        dt = digitalRead(ENC_DT);
+        clk = digitalRead(ENC_CLK);
+
+        uint8_t encoderValue = (dt << 1) | clk;
+        if(encoderValue != lastEncoderValue)
+        {
+            // if encoder was turned left, play a lower tone
+            bool left = (lastEncoderValue == 0b00 && encoderValue == 0b11)
+                     || (lastEncoderValue == 0b11 && encoderValue == 0b10)
+                     || (lastEncoderValue == 0b10 && encoderValue == 0b00);
+            tone(BUZZER, left ? 440 : 880, 20);
+            vTaskDelay(pdMS_TO_TICKS(20));
+            lastEncoderValue = encoderValue;
+        }
+        turnLeds(encoderValue);
+
         auto button = whiteButtonPressed ? Button::White
                     : blackButtonPressed ? Button::Black
                     : selectButtonPressed ? Button::Select
@@ -94,7 +91,7 @@ void TaskIOController(void *pvParameters)
 
         if(playSound)
         {
-            tone(BUZZER, 880, 50);
+            tone(BUZZER, 880, 20);
             vTaskDelay(pdMS_TO_TICKS(200));
         }
         vTaskDelay(pdMS_TO_TICKS(20));
