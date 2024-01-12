@@ -207,7 +207,7 @@ const char* getHeader(MenuItem menuItem)
     case MenuItem::Minutes:
         return SET_MINUTES;
     case MenuItem::Increment:
-        return SET_SECONDS;
+        return SET_INCREMENT;
     default:
         return UNKNOWN;
     }

@@ -27,7 +27,7 @@ void setup()
     // FreeRTOS  Function Name          Task Name               Stack   Params              Prio  Handle
     xTaskCreate( TaskDisplayController, "Lcd controller",       128,    (void*)&gameState,  1,    NULL );
     xTaskCreate( TaskIOController,      "I/O controller",       128,    (void*)&gameState,  3,    NULL );
-    xTaskCreate( TaskGameLoop,          "Game loop",            60,     (void*)&gameState,  2,    NULL );
+    xTaskCreate( TaskGameLoop,          "Game loop",            64,     (void*)&gameState,  2,    NULL );
     vTaskStartScheduler();
 }
 

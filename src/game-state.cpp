@@ -5,6 +5,8 @@
 #include "pinout.h"
 #include <EEPROM.h>
 
+#define INCREMENT_MAX 180
+
 Game::Game(TimerMode timerMode, int minutes, int increment)
 {
     reset(timerMode, minutes, increment);
@@ -163,7 +165,7 @@ void Game::decreaseIncrement()
 
 void Game::increaseIncrement()
 {
-    incrementSeconds = (incrementSeconds < 60) ? incrementSeconds + 5 : 60;
+    incrementSeconds = (incrementSeconds < INCREMENT_MAX) ? incrementSeconds + 5 : INCREMENT_MAX;
 }
 
 void Game::selectNextMenuOption()
@@ -243,8 +245,11 @@ bool Game::buttonPressed(Button button)
     if(isMenuOpen){
         switch (button)
         {
-            case Button::White:     selectNextMenuOption();         break;
-            case Button::Black:     selectPreviousMenuOption();     break;
+            case Button::White:
+            case Button::Right:     selectNextMenuOption();         break;
+
+            case Button::Black:
+            case Button::Left:      selectPreviousMenuOption();     break;
             case Button::Select:    commitMenuOption();             break;
 
             default:

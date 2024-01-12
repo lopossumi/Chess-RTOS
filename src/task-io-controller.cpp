@@ -5,6 +5,7 @@
 #include "task-io-controller.h"
 int leds = B1111;
 
+#define C4 262
 #define A4 440
 #define B4 494
 #define C5 523
@@ -28,8 +29,6 @@ void TaskIOController(void *pvParameters)
     pinMode(BLACK_LED_RED, OUTPUT);
     pinMode(BLACK_LED_GREEN, OUTPUT);
     pinMode(BUZZER, OUTPUT);
-    pinMode(A1, INPUT_PULLUP);
-
     pinMode(ENC_CLK, INPUT_PULLUP);
     pinMode(ENC_DT, INPUT_PULLUP);
 
@@ -42,16 +41,32 @@ void TaskIOController(void *pvParameters)
 
     turnLeds(B0000);
 
-    tone(BUZZER, C5, 80);
-    vTaskDelay(pdMS_TO_TICKS(80));
-    tone(BUZZER, E5, 80);
-    vTaskDelay(pdMS_TO_TICKS(80));
-    tone(BUZZER, G5, 80);
-    vTaskDelay(pdMS_TO_TICKS(80));
-    tone(BUZZER, B5, 80);
-    vTaskDelay(pdMS_TO_TICKS(80));
-    tone(BUZZER, C6, 80);
-    vTaskDelay(pdMS_TO_TICKS(80));
+    playNote(C4, 10);
+    vTaskDelay(pdMS_TO_TICKS(500));
+    playNote(C4, 10);
+    vTaskDelay(pdMS_TO_TICKS(300));
+    playNote(C4, 10);
+    vTaskDelay(pdMS_TO_TICKS(200));
+    playNote(C4, 10);
+    vTaskDelay(pdMS_TO_TICKS(100));
+    playNote(C4, 10);
+    vTaskDelay(pdMS_TO_TICKS(50));
+    playNote(C4, 10);
+    vTaskDelay(pdMS_TO_TICKS(40));
+    playNote(C4, 10);
+    vTaskDelay(pdMS_TO_TICKS(40));
+    playNote(C4, 10);
+    vTaskDelay(pdMS_TO_TICKS(40));
+    playNote(C4, 10);
+    vTaskDelay(pdMS_TO_TICKS(40));
+    playNote(C4, 10);
+    vTaskDelay(pdMS_TO_TICKS(40));
+
+    playHappyTone();
+    playHappyTone();
+    playHappyTone();
+
+    auto *gameState = static_cast<Game *>(pvParameters);
 
     for(;;)
     {
@@ -62,25 +77,24 @@ void TaskIOController(void *pvParameters)
         dt = digitalRead(ENC_DT);
         clk = digitalRead(ENC_CLK);
 
-        uint8_t encoderValue = (dt << 1) | clk;
-        if(encoderValue != lastEncoderValue)
-        {
-            // if encoder was turned left, play a lower tone
-            bool left = (lastEncoderValue == 0b00 && encoderValue == 0b11)
-                     || (lastEncoderValue == 0b11 && encoderValue == 0b10)
-                     || (lastEncoderValue == 0b10 && encoderValue == 0b00);
-            tone(BUZZER, left ? 440 : 880, 20);
-            vTaskDelay(pdMS_TO_TICKS(20));
-            lastEncoderValue = encoderValue;
-        }
-        turnLeds(encoderValue);
 
         auto button = whiteButtonPressed ? Button::White
                     : blackButtonPressed ? Button::Black
                     : selectButtonPressed ? Button::Select
                     : Button::Button_MAX;
-                
-        auto *gameState = static_cast<Game *>(pvParameters);
+
+        uint8_t encoderValue = (dt << 1) | clk;
+        if(encoderValue != lastEncoderValue && gameState->isMenuOpen)
+        {
+            // if encoder was turned left, play a lower tone
+            bool left = (lastEncoderValue == 0b00 && encoderValue == 0b11)
+                     || (lastEncoderValue == 0b11 && encoderValue == 0b10)
+                     || (lastEncoderValue == 0b10 && encoderValue == 0b00);
+            tone(BUZZER, left ? C5 : C6, 20);
+            lastEncoderValue = encoderValue;
+            button = left ? Button::Left : Button::Right;
+        }
+
         bool playSound = gameState->buttonPressed(button);
 
         bool isBlackTurn = gameState->isBlackTurn;
@@ -89,12 +103,15 @@ void TaskIOController(void *pvParameters)
         else if(gameState->isGameStarted)   { turnLeds(isBlackTurn ? B0100 : B1000); }
         else if(!gameState->isMenuOpen)     { turnLeds(B1100); }
 
-        if(playSound)
+        if(button != Button::Left 
+            && button != Button::Right 
+            && button != Button::Button_MAX
+            && playSound)
         {
-            tone(BUZZER, 880, 20);
+            playNote(880, 20);
             vTaskDelay(pdMS_TO_TICKS(200));
         }
-        vTaskDelay(pdMS_TO_TICKS(20));
+        vTaskDelay(pdMS_TO_TICKS(30));
     }
 }
 
@@ -119,4 +136,19 @@ void turnLeds(uint8_t value)
     digitalWrite(BLACK_LED_RED, (value & B0001) ? LED_ON : LED_OFF);
     
     leds = value;
+}
+
+void playNote(int freq, int duration)
+{
+    tone(BUZZER, freq, duration);
+    vTaskDelay(pdMS_TO_TICKS(duration));
+}
+
+void playHappyTone()
+{
+    playNote(C5, 40);
+    playNote(E5, 40);
+    playNote(G5, 40);
+    playNote(B5, 40);
+    playNote(C6, 40);
 }

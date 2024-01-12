@@ -14,6 +14,8 @@ enum class Button
     Black,
     White,
     Select,
+    Left,
+    Right,
     Button_MAX
 };
 
