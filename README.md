@@ -12,15 +12,17 @@ It is by no means a tournament-worthy timepiece, but works nonetheless for casua
 ## Table of contents
 - [Why?](#why)
 - [Hardware](#hardware)
-- [Usage](#usage)
+    - [Parts list](#parts-list)
+    - [Wiring](#wiring)
+    - [Enclosure](#enclosure)
+- [Software](#software)
+- [Instructions](#instructions)
     - [Select mode](#select-mode)
     - [Set minutes](#set-minutes)
     - [Set increment](#set-increment)
     - [Ready to start](#ready-to-start)
     - [During the game](#during-the-game)
     - [Game over](#game-over)
-- [Installation](#installation)
-- [Pictures](#pictures)
 - [License](#license)
 
 ## Why?
@@ -31,7 +33,9 @@ Real-time operating system (RTOS) allows for better task scheduling, synchroniza
 
 Although using an RTOS made the development process easier, Arduino Uno's limited 2kB RAM presented challenges in terms of the number of threads and stack size.
 
-## Parts list
+## Hardware
+
+### Parts list
 To build this chess clock, you'll need the following hardware components:
 
 | Component                                            | Quantity |
@@ -39,7 +43,7 @@ To build this chess clock, you'll need the following hardware components:
 | Arduino Uno                                          | 1        |
 | 16x2 HD44780 liquid crystal display with I2C adapter | 1        |
 | Bi-color common anode LED                            | 2        |
-| Arcade microswitch                                   | 2        |
+| Arcade microswitch (aka joystick button)             | 2        |
 | Encoder with pushbutton                              | 1        |
 | Piezo buzzer                                         | 1        |
 |                                                      |          |
@@ -47,7 +51,20 @@ To build this chess clock, you'll need the following hardware components:
 | *Arduino Grove shield*                               | 1        |
 | *Grove 4 pin cables*                                 | n        |
 
-## Usage
+### Wiring
+
+Todo. It's not hard to figure out for yourself though.
+
+### Enclosure
+The enclosure was made from 3mm birch plywood using a laser cutter. Some glue was needed for assembly, as I did not account for material loss.
+![Enclosure in vector format](images/chess_clock_enclosure.svg?raw=true "Enclosure in vector format for the laser cutter.")
+
+## Software
+
+Open the project in [PlatformIO](https://platformio.org), compile and flash to an Arduino Uno. You may need to install dependencies first.
+
+## Instructions
+
 ### Select mode
 Choose from the following modes:
 
@@ -83,20 +100,6 @@ This screen is not shown in Sudden Death or Hourglass modes.
 
 ### Game over
 * Press Select to return to minute settings.
-
-## Installation
-Open the project in [PlatformIO](https://platformio.org), compile and flash to Arduino Uno. You may need to install dependencies first.
-
-# Hardware
-
-## Wiring
-
-Todo. It's not hard to figure out for yourself though.
-
-## Enclosure
-
-The enclosure was made from 3mm plywood using a laser cutter. Some glue was needed for assembly, as I did not account for material loss.
-![Enclosure in vector format](images/chess_clock_enclosure.svg?raw=true "Enclosure in vector format for the laser cutter.")
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
