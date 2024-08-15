@@ -10,10 +10,12 @@ int leds = B1111;
 #define B4 494
 #define C5 523
 #define D5 587
+#define Eb5 622
 #define E5 659
 #define F5 698
 #define G5 784
 #define A5 880
+#define Bb5 932
 #define B5 988
 #define C6 1047
 #define D6 1175
@@ -32,11 +34,7 @@ void TaskIOController(void *pvParameters)
     pinMode(ENC_CLK, INPUT_PULLUP);
     pinMode(ENC_DT, INPUT_PULLUP);
 
-    bool whiteButtonPressed = false;
-    bool blackButtonPressed = false;
-    bool selectButtonPressed = false;
-    bool dt = false;
-    bool clk = false;
+    uint8_t input = 0;
     uint8_t lastEncoderValue = 0;
 
     turnLeds(B0000);
@@ -64,36 +62,36 @@ void TaskIOController(void *pvParameters)
 
     playHappyTone();
     playHappyTone();
-    playHappyTone();
 
     auto *gameState = static_cast<Game *>(pvParameters);
 
     for(;;)
     {
         turnLeds(leds);
-        whiteButtonPressed = digitalRead(BUTTON_WHITE);
-        blackButtonPressed = digitalRead(BUTTON_BLACK);
-        selectButtonPressed = digitalRead(ENC_SW);
-        dt = digitalRead(ENC_DT);
-        clk = digitalRead(ENC_CLK);
+        input |= digitalRead(BUTTON_WHITE);
+        input |= digitalRead(BUTTON_BLACK) << 1;
+        input |= digitalRead(ENC_SW) << 2;
+        input |= digitalRead(ENC_DT) << 3;
+        input |= digitalRead(ENC_CLK) << 4;
 
 
-        auto button = whiteButtonPressed ? Button::White
-                    : blackButtonPressed ? Button::Black
-                    : selectButtonPressed ? Button::Select
+        auto button = input & 0b00001 ? Button::White
+                    : input & 0b00010 ? Button::Black
+                    : input & 0b00100 ? Button::Select
                     : Button::Button_MAX;
 
-        uint8_t encoderValue = (dt << 1) | clk;
+        uint8_t encoderValue = input >> 3;
         if(encoderValue != lastEncoderValue && gameState->isMenuOpen)
         {
             // if encoder was turned left, play a lower tone
             bool left = (lastEncoderValue == 0b00 && encoderValue == 0b11)
-                     || (lastEncoderValue == 0b11 && encoderValue == 0b10)
-                     || (lastEncoderValue == 0b10 && encoderValue == 0b00);
+                     || (lastEncoderValue == 0b11 && encoderValue == 0b01)
+                     || (lastEncoderValue == 0b01 && encoderValue == 0b00);
             tone(BUZZER, left ? C5 : C6, 20);
             lastEncoderValue = encoderValue;
             button = left ? Button::Left : Button::Right;
         }
+        input = 0;
 
         bool playSound = gameState->buttonPressed(button);
 
@@ -103,12 +101,22 @@ void TaskIOController(void *pvParameters)
         else if(gameState->isGameStarted)   { turnLeds(isBlackTurn ? B0100 : B1000); }
         else if(!gameState->isMenuOpen)     { turnLeds(B1100); }
 
-        if(button != Button::Left 
-            && button != Button::Right 
-            && button != Button::Button_MAX
+        if(button == Button::White
             && playSound)
         {
-            playNote(880, 20);
+            playHappyTone();
+            vTaskDelay(pdMS_TO_TICKS(200));
+        }
+        else if(button == Button::Black
+            && playSound)
+        {
+            playSadTone();
+            vTaskDelay(pdMS_TO_TICKS(200));
+        }
+        else if(button == Button::Select
+            && playSound)
+        {
+            playNote(G5, 20);
             vTaskDelay(pdMS_TO_TICKS(200));
         }
         vTaskDelay(pdMS_TO_TICKS(30));
@@ -130,11 +138,24 @@ void turnLeds(uint8_t value)
         return;
     }
 
+    if(value & B0010 || value & B0011)
+    {
+        playSadTone();
+        playSadTone();
+        playSadTone();
+        playSadTone();
+        playSadTone();
+    }
+    
+    if(leds == B1100)
+    {
+        playHappyTone();
+    }
+
     digitalWrite(WHITE_LED_GREEN, (value & B1000) ? LED_ON : LED_OFF);
     digitalWrite(BLACK_LED_GREEN, (value & B0100) ? LED_ON : LED_OFF);
     digitalWrite(WHITE_LED_RED, (value & B0010) ? LED_ON : LED_OFF);
     digitalWrite(BLACK_LED_RED, (value & B0001) ? LED_ON : LED_OFF);
-    
     leds = value;
 }
 
@@ -151,4 +172,13 @@ void playHappyTone()
     playNote(G5, 40);
     playNote(B5, 40);
     playNote(C6, 40);
+}
+
+void playSadTone()
+{
+    playNote(C5, 40);
+    playNote(Bb5,40);
+    playNote(G5, 40);
+    playNote(Eb5,40);
+    playNote(C5, 40);
 }
