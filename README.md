@@ -5,9 +5,9 @@
 
 This project is an over-engineered chess clock running on Arduino Uno. It's built on top of FreeRTOS (real-time operating system) and requires a 16x2 liquid crystal display.
 
-It is by no means a tournament-worthy timepiece, but works nonetheless.
+It is by no means a tournament-worthy timepiece, but works nonetheless for casual gameplay.
 
-** (in progress as of 2024-01-11) **
+![Photo of the finished chess clock](images/white_to_play.jpeg?raw=true "White to play.")
 
 ## Table of contents
 - [Why?](#why)
