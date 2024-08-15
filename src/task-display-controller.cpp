@@ -8,7 +8,10 @@
 #include "text-resources.h"
 #include "bar-display.h"
 #include "enums.h"
-#include "pinout.h"
+
+#define LCD_ADDRESS 0x27
+#define LCD_COLUMNS 16
+#define LCD_ROWS 2
 
 LiquidCrystal_I2C lcd(LCD_ADDRESS, LCD_COLUMNS, LCD_ROWS);
 char buffer0[17] = "";
@@ -204,7 +207,7 @@ const char* getHeader(MenuItem menuItem)
     case MenuItem::Minutes:
         return SET_MINUTES;
     case MenuItem::Increment:
-        return SET_SECONDS;
+        return SET_INCREMENT;
     default:
         return UNKNOWN;
     }

@@ -1,5 +1,11 @@
+#include <Arduino.h>
+
 #include "game-state.h"
 #include "enums.h"
+#include "pinout.h"
+#include <EEPROM.h>
+
+#define INCREMENT_MAX 180
 
 Game::Game(TimerMode timerMode, int minutes, int increment)
 {
@@ -29,8 +35,8 @@ void Game::reset(TimerMode timerMode, int minutes, int increment)
 int Game::getBlackDelayBar() { return timerMode == TimerMode::SimpleDelay ? (blackDelayTicks * 8) / (incrementSeconds * 10) : 0; }
 int Game::getWhiteDelayBar() { return timerMode == TimerMode::SimpleDelay ? (whiteDelayTicks * 8) / (incrementSeconds * 10) : 0; }
 
-bool Game::isBlackInDanger() { return blackTicksLeft <= 100; }
-bool Game::isWhiteInDanger() { return whiteTicksLeft <= 100; }
+bool Game::isBlackInDanger() { return isBlackTurn && blackTicksLeft <= 100; }
+bool Game::isWhiteInDanger() { return !isBlackTurn && whiteTicksLeft <= 100; }
 
 void Game::incrementBlackOneTick() { blackTicksLeft++; }
 void Game::incrementWhiteOneTick() { whiteTicksLeft++; }
@@ -159,7 +165,7 @@ void Game::decreaseIncrement()
 
 void Game::increaseIncrement()
 {
-    incrementSeconds = (incrementSeconds < 60) ? incrementSeconds + 5 : 60;
+    incrementSeconds = (incrementSeconds < INCREMENT_MAX) ? incrementSeconds + 5 : INCREMENT_MAX;
 }
 
 void Game::selectNextMenuOption()
@@ -225,19 +231,30 @@ void Game::closeMenu()
     whiteDelayTicks = timerMode == TimerMode::SimpleDelay ? incrementSeconds * 10 : 0;
 }
 
-void Game::buttonPressed(Button button)
+void Game::saveSettings()
 {
+    EEPROM.write(EEPROM_TIMER_MODE, (int)timerMode);
+    EEPROM.write(EEPROM_PLAYTIME_MINUTES, playtimeMinutes);
+    EEPROM.write(EEPROM_INCREMENT_SECONDS, incrementSeconds);
+}
+
+bool Game::buttonPressed(Button button)
+{
+    if(button == Button::Button_MAX) { return false; }
+    bool playSound = true;
     if(isMenuOpen){
         switch (button)
         {
-            case Button::White:     selectNextMenuOption();         break;
-            case Button::Black:     selectPreviousMenuOption();     break;
+            case Button::White:
+            case Button::Right:     selectNextMenuOption();         break;
+
+            case Button::Black:
+            case Button::Left:      selectPreviousMenuOption();     break;
             case Button::Select:    commitMenuOption();             break;
 
             default:
                 break;    
         }
-        return;
     }
     else if(!isGameStarted){
         switch (button)
@@ -248,6 +265,9 @@ void Game::buttonPressed(Button button)
                 isBlackTurn = button == Button::White;
                 break;
 
+            case Button::Select:
+                saveSettings();
+                break;
             default:
                 break;
         }
@@ -284,12 +304,20 @@ void Game::buttonPressed(Button button)
             {
                 endWhiteTurn();
             }
+            else
+            {
+                playSound = false;
+            }
             break;
 
         case Button::Black:
             if (isBlackTurn)
             {
                 endBlackTurn();
+            }
+            else
+            {
+                playSound = false;
             }
             break;
 
@@ -302,4 +330,5 @@ void Game::buttonPressed(Button button)
         }
     }
     updateHeader = true;
+    return playSound;
 }

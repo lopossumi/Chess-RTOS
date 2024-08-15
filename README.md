@@ -3,7 +3,7 @@
 > 
 > *-- Me, first days of 2024*
 
-This project is an over-engineered chess clock running on Arduino Uno. It's built on top of FreeRTOS (real-time operating system) and requires a 16x2 liquid crystal display.
+This project is an over-engineered chess clock running on Arduino Uno. It's built on top of FreeRTOS (real-time operating system).
 
 It is by no means a tournament-worthy timepiece, but works nonetheless.
 
@@ -26,22 +26,26 @@ It is by no means a tournament-worthy timepiece, but works nonetheless.
 ## Why?
 I wanted a game clock, and had a bunch of Arduinos lying around. It was also a good opportunity to try out embedded development with GitHub copilot.
 
+### Why FreeRTOS?
+Real-time operating system (RTOS) allows for better task scheduling, synchronization, and resource management. In this project, separate threads are used for I/O, display and game loop.
+
+Although using an RTOS made the development process easier, Arduino Uno's limited 2kB RAM presented challenges in terms of the number of threads and stack size.
+
 ## Parts list
 To build this chess clock, you'll need the following hardware components:
 
-| Component                                      | Quantity |
-| -----------------------------------------------| -------- |
-| Arduino Uno                                    | 1        |
-| 16x2 HD44780 liquid crystal display (LCD)      | 1        |
-| I2C adapter for LCD                            | 1        |
-| Bi-color common anode LED                      | 2        |
-| Arcade microswitch                             | 2        |
-| Pushbutton                                     | 1        |
-|                                                |          |
-| *Optional components:*                         |          |
-| *Arduino Grove shield*                         | 1        |
-| *Grove 4 pin cables*                           | 7        |
-| *Encoder with pushbutton*                      | 1        |
+| Component                                            | Quantity |
+| -----------------------------------------------------| -------- |
+| Arduino Uno                                          | 1        |
+| 16x2 HD44780 liquid crystal display with I2C adapter | 1        |
+| Bi-color common anode LED                            | 2        |
+| Arcade microswitch                                   | 2        |
+| Encoder with pushbutton                              | 1        |
+| Piezo buzzer                                         | 1        |
+|                                                      |          |
+| **Optional components:**                             |          |
+| *Arduino Grove shield*                               | 1        |
+| *Grove 4 pin cables*                                 | n        |
 
 ## Usage
 ### Select mode
@@ -54,15 +58,18 @@ Choose from the following modes:
 | Hourglass     | Opponent's time increases during turn                        |
 | Simple Delay  | Delay for n seconds every turn before clock starts running   |
 
+* Cycle between options by turning the encoder or pressing black and white buttons
+* Press Select to continue to next screen.
+
 ### Set minutes
 Set the amount of play time in minutes (1...90).
-* Cycle between options with Left and Right buttons
+* Cycle between options by turning the encoder or pressing black and white buttons
 * Press Select to continue to next screen.
 
 ### Set increment
 Set the amount of time added at the end of turn (Fischer) or delay before clock starts running (Simple Delay).
 This screen is not shown in Sudden Death or Hourglass modes.
-* Cycle between options with Left and Right buttons
+* Cycle between options by turning the encoder or pressing black and white buttons
 * Press Select to continue to next screen.
 
 ### Ready to start
@@ -71,10 +78,11 @@ This screen is not shown in Sudden Death or Hourglass modes.
 
 ### During the game
 * Select pauses/continues the game
+* Current player is shown by the green LEDs
 * End turn by pressing your own key.
 
 ### Game over
-* Press select to return to minute settings.
+* Press Select to return to minute settings.
 
 ## Installation
 Open the project in [PlatformIO](https://platformio.org), compile and flash to Arduino Uno. You may need to install dependencies first.
