@@ -87,8 +87,16 @@ This screen is not shown in Sudden Death or Hourglass modes.
 ## Installation
 Open the project in [PlatformIO](https://platformio.org), compile and flash to Arduino Uno. You may need to install dependencies first.
 
-## Pictures
-TODO
+# Hardware
+
+## Wiring
+
+Todo. It's not hard to figure out for yourself though.
+
+## Enclosure
+
+The enclosure was made from 3mm plywood using a laser cutter. Some glue was needed for assembly, as I did not account for material loss.
+![Enclosure in vector format](images/chess_clock_enclosure.svg?raw=true "Enclosure in vector format for the laser cutter.")
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
